@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>김연규 (JIN KIM) - 이력서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            color: #1f2937; /* Tailwind gray-800 */
+        }
+        
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #111827; /* Tailwind gray-900 */
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 3rem;
+            height: 0.25rem;
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 0.125rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 1.5rem;
+            border-left: 2px solid #e5e7eb; /* Tailwind gray-200 */
+            padding-bottom: 2rem;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+            border-left: 2px solid transparent; /* Hide border for last item */
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.4rem;
+            top: 0.25rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            border: 2px solid white;
+        }
+
+        @media print {
+            body { 
+                background-color: white !important; 
+                -webkit-print-color-adjust: exact !important; /* 배경색상 출력 강제 */
+                print-color-adjust: exact !important;
+            }
+            .max-w-4xl { 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                max-width: 100% !important;
+            }
+            section, .timeline-item { 
+                page-break-inside: avoid; /* 내용이 페이지 중간에 잘리지 않도록 방지 */
+            }
+            header {
+                padding-top: 2rem !important;
+                padding-bottom: 2rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-blue-200 selection:text-blue-900">
+
+<div class="max-w-4xl mx-auto my-10 bg-white shadow-xl rounded-2xl overflow-hidden sm:my-16">
+    
+    <!-- Header / Banner -->
+    <header class="bg-gray-900 text-white relative">
+        <div class="absolute inset-0 z-0 opacity-30 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x400/111827/ffffff?text=Environment+Concept+Art');"></div>
+        
+        <div class="relative z-10 px-8 py-16 md:px-12 md:py-20 flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm bg-gray-900/50">
+            <div class="text-center md:text-left">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-2">김연규 (JIN KIM)</h1>
+                <p class="text-xl md:text-2xl text-blue-400 font-medium tracking-wide">ENVIRONMENT CONCEPT ARTIST</p>
+            </div>
+            
+            <!-- Contact Info -->
+            <div class="flex flex-col gap-3 text-sm md:text-base text-gray-300 items-center md:items-end">
+                <a href="mailto:jinkimoffice@gmail.com" class="flex items-center gap-2 hover:text-white transition-colors">
+                    <i class="fas fa-envelope"></i> jinkimoffice@gmail.com
+                </a>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-phone"></i> 010-9181-0670
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="p-8 md:p-12">
+        
+        <!-- About Me Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold section-title">소개 (About Me)</h2>
+            <p class="text-gray-700 leading-relaxed text-justify md:text-left">
+                비디오 게임 업계에서 활동하는 배경컨셉 아티스트로서 Photoshop, 3D Coat, Keyshot 렌더링을 활용하여 프로젝트 요구 사항에 맞는 목표를 달성하기 위해 노력합니다. 현재 네오플에서 시니어 배경컨셉 아티스트로 일하고 있으며, 이전에는 넥슨코리아, 넷마블 네오와 고도플레이의 프로젝트에 참여했습니다.<br><br>
+                자연과 건축물을 관찰하는 것을 좋아하며, 이를 세계관에 적합하게 재해석하여 게임에 녹여내는 것을 목표로 하고 있습니다. 또한 게임이 유저에게 주고자 하는 감정에 부합하는 아트작업을 만들 수 있기를 희망합니다.
+            </p>
+            <div class="mt-6">
+                <a href="https://jinkimdrawing.wixsite.com/concept" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold px-6 py-3 rounded-lg transition-all">
+                    <i class="fas fa-globe"></i> 포트폴리오 웹사이트
+                </a>
+            </div>
+        </section>
+
+        <!-- Experience Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold section-title">경력 (Experience)</h2>
+            <div class="space-y-2">
+                
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">PROJECT DM (미공개) | 배경원화가 (과장)</h3>
+                        <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2024.12 ~ 2026.07</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">네오플 (Neople)</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>프로젝트 초기 주요 지역(필드, 보스 구역)의 환경 콘셉트 아트 제작</li>
+                        <li>플레이 동선을 고려한 거점·지형 디자인 및 월드맵 제작</li>
+                        <li>하늘성 마법진, 카자도르 벽화 등 연출용 VFX 콘셉트와 프랍 제작</li>
+                        <li>신규 입사자 온보딩 및 실무 가이드 멘토링 수행</li>
+                        <li class="mt-2 text-indigo-700 font-medium">사내 NYPD 알고리즘 경진대회 참가 (2026.05)
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>참여 임직원 중 20위 기록</li>
+                                <li>기술적 도구(AI 등)를 아트 제작 프로세스에 유연하게 접목하고 실험하는 능동적인 태도 입증</li>
+                                <li class="mt-2">
+                                    <a href="https://nypc-static.s3.ap-northeast-2.amazonaws.com/2026/cleaning-internal-result/index.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 hover:text-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
+                                        <i class="fas fa-external-link-alt text-indigo-500 text-sm group-hover/link:scale-110 transition-transform"></i> 결과 확인 링크 : 유저사번 34969
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">PROJECT MP (미공개) | 배경원화가 (P3)</h3>
+                        <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2024.04 ~ 2024.12</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">넥슨코리아 (Nexon Korea)</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>MP실을 위한 신작 TF 프로젝트 준비 (참여 프로젝트 중 2개 2024 NDC 공개)
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>조선 테마의 몬스터 디자인이 포함된 키아트 일러스트레이션</li>
+                                <li>장난감 캐릭터 원화 디자인 작업</li>
+                                
+                            </ul>
+                        </li>
+                        <li>메이플 월드 : 메이플스토리 메모리즈 2005 내부 아트 리소스 제작</li>
+                    </ul>
+                    <div class="mt-4 flex gap-3 flex-wrap">
+                        <a href="https://www.youtube.com/watch?v=1dLGUo0q90Y" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
+                            <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 조선 구미호
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=nFLtV0chm-c" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
+                            <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 밍글플래닛
+                        </a>
+                    </div>
+                </div>
+
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">PROJECT HP - 워헤이븐 | 배경원화가 (P3)</h3>
+                        <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2022.07 ~ 2024.03</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">넥슨코리아 (Nexon Korea)</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>워헤이븐 세계관에 맞는 각종 프랍 작업 및 BM용 일러스트 작업
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>참여 맵: 시한 / 무원 / 드래곤 정비소</li>
+                            </ul>
+                        </li>
+                        <li>외주처의 BM 일러스트 아트 작업 규격 검수 및 엔진 정리</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="https://www.youtube.com/watch?v=ius-0d8QlMc" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm w-fit group/link">
+                        <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 워헤이븐 트레일러
+                    </a>
+                </div>
+            </div>
+
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">PROJECT T - 왕좌의 게임 | 배경원화가 (사원)</h3>
+                        <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2019.12 ~ 2022.07</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">넷마블 네오 (Netmarble Neo)</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>왕좌의 게임 IP를 이용한 모바일 오픈월드 MMORPG 게임 개발</li>
+                        <li>개발 초기 단계부터 팀에 합류해 게임 내의 7개 지역의 일러스트와 프랍 담당
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>윈터펠, 티렐 하이가든, 캐슬블랙, 유저 커스터마이징용 주둔지 등</li>
+                            </ul>
+                        </li>
+                        <li>레벨 작업 서포트
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>울트라 다이나믹 스카이 시스템을 이용해 시간별 스카이 색감 지정 및 뷰 포인트 설정용 엔진 배치작업 등</li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="mt-4">
+                <a href="https://www.youtube.com/results?search_query=%EC%99%95%EC%A2%8C%EC%9D%98+%EA%B2%8C%EC%9E%84+%ED%82%B9%EC%8A%A4%EB%A1%9C%EB%93%9C+%ED%8A%B8%EB%A0%88%EC%9D%BC%EB%9F%AC" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm w-fit group/link">
+                    <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 왕좌의 게임: 킹스로드 트레일러
+                </a>
+            </div>
+        </div>
+
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">크로스 파이어 : 워 존 | 배경원화가 (사원)</h3>
+                        <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2017.08 ~ 2019.05</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">고도플레이 (Godoplay)</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>크로스 파이어 IP를 이용한 전쟁 시뮬레이션 게임 개발
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>밀리터리 스타일의 프랍 아트리소스와 일러스트를 제작</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                 <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">해외영업부서 수출입 담당 | 인턴 및 사원</h3>
+                        <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">2013.08 ~ 2016.06</span>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">에이스팩</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>13개국 30여 개 해외 거래처 대상 L/C 기반 수출입 계약 및 고객 대응 업무 수행</li>
+                      
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Personal Project Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold section-title">개인 프로젝트 (Personal Projects)</h2>
+            <div class="space-y-2">
+                <div class="timeline-item group hover:bg-gray-50 rounded-r-lg transition-colors p-4 -ml-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">두미니어니언 (가칭) | 아트 및 연출</h3>
+                    </div>
+                    <p class="text-gray-600 font-medium mb-3">농사 덱빌딩 게임</p>
+                    <ul class="list-disc list-outside ml-5 text-gray-700 space-y-1.5 marker:text-gray-400">
+                        <li>2인 개발로 진행한 농사 덱빌딩 게임으로, 다양한 채소, 과일, 버섯을 재배하고 씨앗을 심고 물을 주어 병충해로부터 농장을 지키는 게임</li>
+                        <li>역할: 아트 전체 담당, 세계관 내러티브 공동작업, AI 보조 기반 게임 연출 구현 및 폴리싱</li>
+                        <li>AI관련 주요 기술 및 업무:
+                            <ul class="list-circle list-outside ml-5 mt-1 space-y-1 text-gray-600 text-sm">
+                                <li>Unity UI Toolkit 기반 UI 제작</li>
+                                <li>AI를 활용한 캐릭터 행동 및 VFX·SFX 연동 구현</li>
+                                <li>애니메이션과 이펙트의 타이밍, 위치, 음량 및 BGM 전환 반복 조정을 통한 조작 피드백 강화</li>
+                                <li>Suno를 이용한 BGM제작</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            
+            <!-- Education Section -->
+            <section>
+                <h2 class="text-2xl font-bold section-title">학력 (Education)</h2>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h3 class="text-lg font-bold text-gray-900">세종대학교</h3>
+                            <span class="text-sm text-gray-500">2007.03 ~ 2013.02</span>
+                        </div>
+                        <p class="text-gray-700 font-medium">학사 - 영어영문학과 (한국화 부전공)</p>
+                        <ul class="list-disc list-outside ml-5 mt-2 text-gray-600 text-sm space-y-1 marker:text-gray-300">
+                            <li>첫 번째 TEDx SejongU를 조직하여 성공적으로 개최</li>
+                            <li>서울 성동구청에서 진행하는 초등학생 대상 영어 교육 자원봉사 참여</li>
+                            <li>교내 과제 전시 및 졸업 전시회 참여</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h3 class="text-lg font-bold text-gray-900">Shanghai Normal University</h3>
+                            <span class="text-sm text-gray-500">2011.09 ~ 2012.01</span>
+                        </div>
+                        <p class="text-gray-700 font-medium text-sm">General Chinese Program (Shanghai, China)</p>
+                        <p class="text-gray-600 text-sm mt-1">상해 사범대의 어학연수 프로그램을 한 학기 이수, HSK6급 취득</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <h3 class="text-lg font-bold text-gray-900">Johnson & Wales University</h3>
+                            <span class="text-sm text-gray-500">2010.06 ~ 2010.07</span>
+                        </div>
+                        <p class="text-gray-700 font-medium text-sm">교환학생 프로그램 (Providence, RI, USA)</p>
+                        <p class="text-gray-600 text-sm mt-1">여름방학 동안 교내 교환학생 프로그램을 통해 3학점 수업 참여</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Awards & Media Section -->
+            <section>
+                <h2 class="text-2xl font-bold section-title">수상 및 미디어 (Awards & Media)</h2>
+                <div class="space-y-4">
+                    <div class="block group bg-gray-50 rounded-lg p-4 hover:bg-indigo-50 hover:shadow-md transition-all border border-gray-100">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-indigo-100 text-indigo-600 p-2 rounded-lg mt-1 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-gray-900 font-bold group-hover:text-indigo-700 transition-colors">청강문화산업대학교 특강 진행</h3>
+                                <p class="text-sm text-gray-600 mt-2 leading-relaxed">게임 개발 프로세스와 배경 원화가의 역할, 협업 방식 및 실무 경험을 주제로 학생 대상 강연 진행</p>
+                                <p class="text-xs font-semibold text-gray-400 mt-2">2026.07</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="https://magazine.artstation.com/2022/02/environment-design-interview-untamed-challenge/" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-blue-50 hover:shadow-md transition-all border border-gray-100">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mt-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-gray-900 font-bold group-hover:text-blue-700 transition-colors">아트스테이션 배경부문 공모전 입상 인터뷰</h3>
+                                <p class="text-sm text-gray-500 mt-1 truncate max-w-[250px] sm:max-w-xs">magazine.artstation.com</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://www.youtube.com/watch?v=v1Jm5e_Bx_8" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-red-50 hover:shadow-md transition-all border border-gray-100">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-red-100 text-red-600 p-2 rounded-lg mt-1 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-gray-900 font-bold group-hover:text-red-700 transition-colors">3D coat 프로모션 광고</h3>
+                                <p class="text-sm text-gray-500 mt-1 truncate max-w-[250px] sm:max-w-xs">youtube.com/watch?v=v1Jm5e_Bx_8</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://www.youtube.com/watch?v=q5eh4xtxztk" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-red-50 hover:shadow-md transition-all border border-gray-100">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-red-100 text-red-600 p-2 rounded-lg mt-1 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-gray-900 font-bold group-hover:text-red-700 transition-colors">3D를 이용한 컨셉 아티스트 인터뷰</h3>
+                                <p class="text-sm text-gray-500 mt-1 truncate max-w-[250px] sm:max-w-xs">youtube.com/watch?v=q5eh4xtxztk</p>
+                            </div>
+                        </div>
+                    </a>
+
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-100 border-t border-gray-200 p-6 text-center text-gray-500 text-sm">
+        <p>&copy; 2024 JIN KIM. All rights reserved.</p>
+    </footer>
+</div>
+
+</body>
+</html>
