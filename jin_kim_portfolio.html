@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JIN KIM - Environment Concept Artist Portfolio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '"Noto Sans KR"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-[#121212] text-stone-100 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+    <!-- ArtStation Style Header / Profile Banner -->
+    <header class="bg-[#181818] border-b border-stone-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-lg text-white shadow-lg">
+                    JK
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">
+                        Jin Kim
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-stone-400">Environment Concept Artist</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-all shadow-md flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span>Contact</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Password Modal for Locked Categories -->
+    <div id="password-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-[#181818] border border-stone-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full relative shadow-2xl">
+            <button onclick="closePasswordModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="text-lg font-bold text-white mb-2">Protected Category</h3>
+            <p class="text-xs text-stone-400 mb-6">이 페이지는 비밀번호 보호가 설정되어 있습니다. 비밀번호를 입력해주세요.</p>
+            <div class="space-y-4">
+                <input type="password" id="password-input" placeholder="비밀번호 입력 (예: 1234)" class="w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500">
+                <p id="password-error" class="text-xs text-red-400 hidden">비밀번호가 올바르지 않습니다.</p>
+                <div class="flex gap-2">
+                    <button onclick="closePasswordModal()" class="w-1/2 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-bold transition-all">취소</button>
+                    <button onclick="verifyPassword()" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ArtStation Filter / Tabs -->
+    <nav class="bg-[#161616] border-b border-stone-800 sticky top-16 sm:top-20 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between overflow-x-auto no-scrollbar gap-2">
+            <div id="category-tabs" class="flex items-center space-x-2 shrink-0">
+                <!-- Dynamically populated category tabs -->
+            </div>
+            <div class="text-xs text-stone-400 shrink-0 font-medium hidden sm:block">
+                <span id="artwork-count" class="text-white font-bold">0</span> Artworks
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main ArtStation Portfolio Grid -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
+        <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <!-- Dynamically populated artwork cards -->
+        </div>
+    </main>
+
+    <!-- ArtStation Style Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden items-center justify-center p-2 sm:p-6 overflow-y-auto">
+        <button onclick="closeModal()" class="fixed top-4 right-4 sm:top-6 sm:right-6 text-stone-400 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700 rounded-full p-2.5 transition-all z-20 shadow-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
+        <div class="relative max-w-5xl w-full bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh]">
+            <!-- Image / Video View -->
+            <div id="modal-media-container" class="w-full bg-black flex items-center justify-center relative min-h-[350px] max-h-[60vh] overflow-hidden p-4">
+                <!-- Dynamically populated media -->
+            </div>
+            
+            <!-- Horizontal Description Bar at the Bottom -->
+            <div class="w-full p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-3">
+                        <span id="modal-category" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-800/40">Category</span>
+                        <h2 id="modal-title" class="text-lg sm:text-xl font-bold text-white tracking-tight">Artwork Title</h2>
+                    </div>
+                    <p id="modal-desc" class="text-xs text-stone-400 leading-relaxed font-light mt-2 max-w-3xl">Artwork detailed description goes here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-[#181818] border border-stone-800 rounded-2xl p-6 sm:p-8 max-w-md w-full relative shadow-2xl">
+            <button onclick="closeContactModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="text-lg font-bold text-white mb-2">Get in Touch</h3>
+            <p class="text-xs text-stone-400 mb-6">프로젝트 협업이나 문의사항이 있으시면 아래 메일로 연락주세요.</p>
+            <div class="space-y-4">
+                <div class="p-3 bg-stone-900 border border-stone-800 rounded-xl text-xs text-stone-300 font-mono select-all flex items-center justify-between">
+                    <span>jin.kim.art@example.com</span>
+                    <span class="text-[10px] text-blue-400 font-sans">Click to Copy</span>
+                </div>
+                <button onclick="closeContactModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-[#141414] border-t border-stone-800 py-8 text-center text-xs text-stone-500">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>&copy; 2026 JIN KIM. All rights reserved. ArtStation Style Portfolio.</p>
+            <div class="flex items-center space-x-6 text-stone-400">
+                <a href="#" class="hover:text-white transition-colors">ArtStation</a>
+                <a href="#" class="hover:text-white transition-colors">Twitter / X</a>
+                <a href="#" class="hover:text-white transition-colors">LinkedIn</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const projectsData = [
+            {
+                id: "개인작",
+                title: "1. 개인작",
+                categoryKey: "개인작",
+                items: [
+                    { id: 1, title: "고대 사원 콘셉트 아트", subtitle: "개인작", category: "개인작", url: "01.jpg", type: "image", desc: "고대 문명의 신비로운 분위기를 담은 판타지 환경 콘셉트 아트입니다." },
+                    { id: 2, title: "절벽과 인물 일러스트 스터디", subtitle: "개인작", category: "개인작", url: "02.avif", type: "image", desc: "광활한 대자연 속 인물을 배치하여 서사를 부여한 스터디 작업물입니다." },
+                    { id: 3, title: "Hidden Squirrel City - 전경 뷰", subtitle: "개인작", category: "개인작", url: "03.avif", type: "image", desc: "다람쥐들의 아기자기하고 거대한 도시 생태계를 시각화한 컨셉트 아트입니다." },
+                    { id: 4, title: "Hidden Squirrel City - 관찰자", subtitle: "개인작", category: "개인작", url: "04.avif", type: "image", desc: "도시를 감시하는 수호자의 시선에서 바라본 디테일 뷰입니다." },
+                    { id: 5, title: "The Folk House 건축 구조", subtitle: "개인작", category: "개인작", url: "05.avif", type: "image", desc: "전통 가옥의 목재 구조와 따뜻한 조명 연출에 집중한 작업입니다." },
+                    { id: 6, title: "Temple of Wind 콘셉트 디자인", subtitle: "개인작", category: "개인작", url: "06.avif", type: "image", desc: "바람이 휘몰아치는 고산 지대의 신전 풍경입니다." },
+                    { id: 7, title: "숲속 나무집 야경 뷰", subtitle: "개인작", category: "개인작", url: "07.avif", type: "image", desc: "밤하늘과 어우러지는 아늑한 숲속 거주지의 야경 콘셉트입니다." },
+                    { id: 8, title: "아발론 입구 성채 전경", subtitle: "개인작", category: "개인작", url: "08.avif", type: "image", desc: "거대한 성벽과 웅장한 아발론 관문의 웅장함을 표현했습니다." },
+                    { id: 9, title: "아발론 입구 프로세스 시트", subtitle: "개인작", category: "개인작", url: "09.avif", type: "image", desc: "스케치부터 레퍼런스 및 라이팅 배치 과정을 담은 시트입니다." },
+                    { id: 10, title: "수중 사원 유적 분위기 렌더", subtitle: "개인작", category: "개인작", url: "10.avif", type: "image", desc: "깊은 심해 속 잠들어 있는 고대 유적의 빛과 안개 연출입니다." }
+                ]
+            },
+            {
+                id: "도미니어니언",
+                title: "2. 도미니어니언",
+                categoryKey: "도미니어니언",
+                items: [
+                    { id: 11, title: "도미니어니언 시네마틱 트레일러", subtitle: "도미니어니언", category: "도미니어니언", url: "https://www.w3schools.com/html/mov_bbb.mp4", type: "video", desc: "도미니어니언 세계관의 실시간 엔진 시네마틱 비디오 클립입니다." },
+                    { id: 12, title: "도미니어니언 영웅 캐릭터", subtitle: "도미니어니언", category: "도미니어니언", url: "https://placehold.co/1200x800/1e293b/94a3b8?text=Dominion+Character", type: "image", desc: "주요 세력을 이끄는 영웅들의 비주얼 콘셉트입니다." }
+                ]
+            },
+            {
+                id: "워헤이븐",
+                title: "3. 워헤이븐",
+                categoryKey: "워헤이븐",
+                items: [
+                    { id: 13, title: "워헤이븐 공성전 전투 비주얼", subtitle: "워헤이븐", category: "워헤이븐", url: "https://placehold.co/1200x800/334155/cbd5e1?text=Warhaven+Siege", type: "image", desc: "치열한 중세 전장의 열기를 담은 시네마틱 콘셉트 아트입니다." }
+                ]
+            },
+            {
+                id: "왕좌의게임",
+                title: "4. 왕좌의게임",
+                categoryKey: "왕좌의게임",
+                items: [
+                    { id: 14, title: "윈터펠 성채 디자인 컨셉", subtitle: "왕좌의게임", category: "왕좌의게임", url: "https://placehold.co/1200x800/0f172a/e2e8f0?text=GOT+Winterfell", type: "image", desc: "눈 쌓인 북부 영지의 요새 윈터펠 재해석 작업입니다." }
+                ]
+            },
+            {
+                id: "Project MP",
+                title: "5. Project MP",
+                categoryKey: "Project MP",
+                items: [
+                    { id: 15, title: "전술 무기 모델링 및 텍스처", subtitle: "Project MP", category: "Project MP", url: "https://placehold.co/1200x800/334155/f8fafc?text=Project+MP+Weapon", type: "image", desc: "현대전 배경의 정밀한 전술 무기 에셋 비주얼입니다." }
+                ]
+            },
+            {
+                id: "Project DM",
+                title: "6. Project DM",
+                categoryKey: "Project DM",
+                items: [
+                    { id: 16, title: "고대 지하 던전 분위기 연출", subtitle: "Project DM", category: "Project DM", url: "https://placehold.co/18181b/a1a1aa?text=Project+DM+Dungeon", type: "image", desc: "어두운 분위기의 다크 판타지 던전 레벨 콘셉트입니다." }
+                ]
+            },
+            {
+                id: "Project Z",
+                title: "7. Project Z",
+                categoryKey: "Project Z",
+                items: [
+                    { id: 17, title: "폐허가 된 대도시 전경", subtitle: "Project Z", category: "Project Z", url: "https://placehold.co/1200x800/27272a/71717a?text=Project+Z+Ruins", type: "image", desc: "포스트 아포칼립스 세계관의 황폐해진 도시 풍경입니다." }
+                ]
+            }
+        ];
+
+        let currentCategory = "개인작";
+        let currentItem = null;
+        const lockedCategories = ["도미니어니언"];
+        const unlockedCategories = new Set();
+        let pendingCategory = null;
+
+        const categories = [
+            { key: "개인작", name: "1. 개인작" },
+            { key: "도미니어니언", name: "2. 도미니어니언" },
+            { key: "워헤이븐", name: "3. 워헤이븐" },
+            { key: "왕좌의게임", name: "4. 왕좌의게임" },
+            { key: "Project MP", name: "5. Project MP" },
+            { key: "Project DM", name: "6. Project DM" },
+            { key: "Project Z", name: "7. Project Z" }
+        ];
+
+        function getFilteredItems() {
+            const catObj = projectsData.find(p => p.categoryKey === currentCategory);
+            return catObj ? catObj.items : [];
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('category-tabs');
+            container.innerHTML = '';
+            categories.forEach(cat => {
+                const isActive = currentCategory === cat.key;
+                const isLocked = lockedCategories.includes(cat.key) && !unlockedCategories.has(cat.key);
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    isActive 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-[#222222] text-stone-300 hover:bg-[#2a2a2a] hover:text-white border border-stone-800'
+                }`;
+                
+                let iconHtml = '';
+                if (isLocked) {
+                    iconHtml = `<svg class="w-3.5 h-3.5 text-amber-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
+                }
+                
+                btn.innerHTML = `${iconHtml}<span>${cat.name}</span>`;
+                
+                btn.onclick = () => {
+                    if (isLocked) {
+                        pendingCategory = cat.key;
+                        openPasswordModal();
+                    } else {
+                        currentCategory = cat.key;
+                        renderTabs();
+                        renderGallery();
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function openPasswordModal() {
+            const inputEl = document.getElementById('password-input');
+            if (inputEl) inputEl.value = '';
+            const errorEl = document.getElementById('password-error');
+            if (errorEl) errorEl.classList.add('hidden');
+            const modal = document.getElementById('password-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                if (inputEl) inputEl.focus();
+            }
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('password-modal');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+            pendingCategory = null;
+        }
+
+        function verifyPassword() {
+            const inputEl = document.getElementById('password-input');
+            const pw = inputEl ? inputEl.value : '';
+            if (pw === "1234") {
+                if (pendingCategory) {
+                    unlockedCategories.add(pendingCategory);
+                    currentCategory = pendingCategory;
+                }
+                closePasswordModal();
+                renderTabs();
+                renderGallery();
+            } else {
+                const errorEl = document.getElementById('password-error');
+                if (errorEl) errorEl.classList.remove('hidden');
+            }
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            const items = getFilteredItems();
+            
+            const countEl = document.getElementById('artwork-count');
+            if (countEl) countEl.textContent = items.length;
+
+            grid.innerHTML = '';
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "group bg-[#181818] border border-stone-800 rounded-xl overflow-hidden shadow-md hover:border-stone-600 hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col";
+                card.onclick = () => openModal(item);
+                
+                let mediaHtml = '';
+                if (item.type === 'video') {
+                    mediaHtml = `
+                        <div class="w-full h-full bg-stone-900 flex items-center justify-center relative">
+                            <video src="${item.url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" muted preload="metadata"></video>
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <div class="w-12 h-12 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    mediaHtml = `
+                        <img src="${item.url}" alt="${item.title}" onerror="this.src='https://placehold.co/800x500/18181b/71717a?text=Image+Load+Error'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="aspect-[16/10] w-full bg-stone-900 overflow-hidden relative">
+                        ${mediaHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openModal(item) {
+            currentItem = item;
+            const container = document.getElementById('modal-media-container');
+            if (container) {
+                container.innerHTML = '';
+
+                if (item.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = item.url;
+                    video.controls = true;
+                    video.autoplay = true;
+                    video.className = "max-h-[55vh] w-auto object-contain rounded-lg";
+                    container.appendChild(video);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = item.url;
+                    img.alt = item.title;
+                    img.className = "max-h-[55vh] w-auto object-contain";
+                    container.appendChild(img);
+                }
+            }
+
+            const catEl = document.getElementById('modal-category');
+            if (catEl) catEl.textContent = item.category;
+            const titleEl = document.getElementById('modal-title');
+            if (titleEl) titleEl.textContent = item.title;
+            const descEl = document.getElementById('modal-desc');
+            if (descEl) descEl.textContent = item.desc;
+
+            const modal = document.getElementById('detail-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detail-modal');
+            const container = document.getElementById('modal-media-container');
+            if (container) {
+                const video = container.querySelector('video');
+                if (video) video.pause();
+            }
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function openContactModal() {
+            const modal = document.getElementById('contact-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeContactModal() {
+            const modal = document.getElementById('contact-modal');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeContactModal();
+                closePasswordModal();
+            }
+        });
+
+        window.onload = function() {
+            renderTabs();
+            renderGallery();
+        }
+    </script>
+</body>
+</html>
