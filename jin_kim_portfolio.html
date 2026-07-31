@@ -88,8 +88,8 @@
     </nav>
 
     <!-- Main Grid -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
-        <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+    <main class="flex-grow max-w-[1800px] mx-auto px-4 sm:px-6 py-8 w-full">
+        <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         </div>
     </main>
 
@@ -107,9 +107,9 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
 
-        <div class="relative max-w-5xl w-full bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh]">
-            <div id="modal-media-container" class="w-full bg-black flex items-center justify-center relative min-h-[350px] max-h-[60vh] overflow-hidden p-4"></div>
-            <div class="w-full p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="relative w-[96vw] max-w-[1800px] h-[94vh] max-h-[94vh] bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col">
+            <div id="modal-media-container" class="w-full bg-black flex flex-1 min-h-0 items-center justify-center relative overflow-hidden p-2 sm:p-4"></div>
+            <div class="w-full shrink-0 p-4 sm:p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-3">
                         <span id="modal-category" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-800/40"></span>
@@ -143,13 +143,22 @@
     </footer>
 
     <script>
+        const makeImageItems = (category, folder, filenames) => filenames.map((filename, index) => ({
+                    id: `${category}-${index + 1}`,
+                    title: filename.replace(/\.[^.]+$/, ''),
+                    category,
+                    url: encodeURI(`${folder}/${filename}`),
+                    type: "image",
+                    desc: `${category} · ${index + 1} / ${filenames.length}`
+                }));
+
         const projectsData = [
-            { id: "개인작", title: "개인작", categoryKey: "개인작", items: [ { id: 1, title: "고대 사원", category: "개인작", url: "01.jpg", type: "image", desc: "고대 문명의 신비." }, { id: 2, title: "절벽 스터디", category: "개인작", url: "02.avif", type: "image", desc: "대자연 서사." } ] },
+            { id: "개인작", title: "개인작", categoryKey: "개인작", items: makeImageItems("개인작", "개인작", ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg"]) },
             { id: "도미니어니언", title: "도미니어니언", categoryKey: "도미니어니언", items: [ { id: 11, title: "시네마틱", category: "도미니어니언", url: "https://www.w3schools.com/html/mov_bbb.mp4", type: "video", desc: "실시간 엔진." } ] },
-            { id: "워헤이븐", title: "워헤이븐", categoryKey: "워헤이븐", items: [ { id: 13, title: "공성전", category: "워헤이븐", url: "https://placehold.co/1200x800/334155/cbd5e1?text=Warhaven", type: "image", desc: "중세 전장." } ] },
-            { id: "왕좌의게임", title: "왕좌의게임", categoryKey: "왕좌의게임", items: [ { id: 14, title: "윈터펠", category: "왕좌의게임", url: "https://placehold.co/1200x800/0f172a/e2e8f0?text=Winterfell", type: "image", desc: "북부 요새." } ] },
-            { id: "Project MP", title: "Project MP", categoryKey: "Project MP", items: [ { id: 15, title: "전술 무기", category: "Project MP", url: "https://placehold.co/1200x800/334155/f8fafc?text=Weapon", type: "image", desc: "현대전 무기." } ] },
-            { id: "Project DM", title: "Project DM", categoryKey: "Project DM", items: [ { id: 16, title: "던전", category: "Project DM", url: "https://placehold.co/18181b/a1a1aa?text=Dungeon", type: "image", desc: "다크 판타지." } ] }
+            { id: "워헤이븐", title: "워헤이븐", categoryKey: "워헤이븐", items: makeImageItems("워헤이븐", "워헤이븐", ["01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg"]) },
+            { id: "왕좌의게임", title: "왕좌의게임", categoryKey: "왕좌의게임", items: makeImageItems("왕좌의게임", "왕좌의게임", ["00.jpg", "00-1.jpg", "01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "08-1.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "14-1.jpg", "15.jpg", "16.jpg", "16-1.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg", "24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg", "30.jpg", "31.jpg", "32.jpg", "33.jpg", "34.jpg", "35.jpg", "36.jpg"]) },
+            { id: "Project MP", title: "Project MP", categoryKey: "Project MP", items: makeImageItems("Project MP", "project MP", ["24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg"]) },
+            { id: "Project DM", title: "Project DM", categoryKey: "Project DM", items: makeImageItems("Project DM", "project DM", ["sheet_arad01.jpg", "sheet_arad02.jpg", "sheet_arad03.jpg", "sheet_arad04.jpg", "sheet_arad05.jpg", "sheet_arad06.jpg", "sheet_dolomite castle.jpg", "sheet_dolomite forest2.jpg", "sheet_gate0.jpg", "sheet_gate1.jpg", "sheet_gate2.jpg", "Sheet_ruin01.jpg", "Sheet_ruin02.jpg", "Sheet_ruin03.jpg", "Sheet_ruin04.jpg", "sheet_watch tower1.jpg", "sheet_watch tower2.jpg", "Sheet_worldmap.jpg"]) }
         ];
 
         let currentCategory = "개인작";
@@ -182,7 +191,7 @@
                 const card = document.createElement('div');
                 card.className = "group bg-[#181818] border border-stone-800 rounded-xl overflow-hidden cursor-pointer";
                 card.onclick = () => openModal(item, index);
-                card.innerHTML = `<div class="aspect-[16/10] overflow-hidden"><img src="${item.url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"></div>`;
+                card.innerHTML = `<div class="aspect-[16/10] overflow-hidden bg-black"><img src="${item.url}" alt="${item.title}" loading="lazy" decoding="async" class="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"></div>`;
                 grid.appendChild(card);
             });
         }
@@ -197,7 +206,7 @@
         function updateModalContent() {
             const items = projectsData.find(p => p.categoryKey === currentCategory).items;
             const item = items[currentItemIndex];
-            document.getElementById('modal-media-container').innerHTML = item.type === 'video' ? `<video src="${item.url}" controls autoplay class="max-h-[55vh]"></video>` : `<img src="${item.url}" class="max-h-[55vh] w-auto">`;
+            document.getElementById('modal-media-container').innerHTML = item.type === 'video' ? `<video src="${item.url}" controls autoplay class="max-h-full max-w-full"></video>` : `<img src="${item.url}" alt="${item.title}" class="max-h-full max-w-full w-auto h-auto object-contain">`;
             document.getElementById('modal-category').textContent = item.category;
             document.getElementById('modal-title').textContent = item.title;
             document.getElementById('modal-desc').textContent = item.desc;
