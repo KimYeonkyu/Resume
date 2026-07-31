@@ -28,6 +28,15 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        .fullscreen-viewer {
+            height: 100vh;
+            height: 100dvh;
+        }
+        .fullscreen-media {
+            max-width: 100vw;
+            max-height: 100vh;
+            max-height: 100dvh;
+        }
     </style>
 </head>
 <body class="bg-[#121212] text-stone-100 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
@@ -94,28 +103,28 @@
     </main>
 
     <!-- Detail Modal -->
-    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden items-center justify-center p-2 sm:p-6 overflow-y-auto">
-        <button onclick="closeModal()" class="fixed top-4 right-4 sm:top-6 sm:right-6 text-stone-400 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700 rounded-full p-2.5 transition-all z-20 shadow-xl">
+    <div id="detail-modal" role="dialog" aria-modal="true" aria-label="Artwork viewer" class="fixed inset-0 z-50 bg-black hidden items-center justify-center overflow-hidden">
+        <button id="modal-close-button" type="button" aria-label="상세 이미지 닫기" onclick="closeModal()" class="fixed top-4 right-4 sm:top-6 sm:right-6 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
         
-        <button onclick="prevArtwork()" class="fixed left-4 sm:left-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700 rounded-full p-3 transition-all z-20 shadow-xl">
+        <button type="button" aria-label="이전 작품" onclick="prevArtwork()" class="fixed left-3 sm:left-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         </button>
 
-        <button onclick="nextArtwork()" class="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700 rounded-full p-3 transition-all z-20 shadow-xl">
+        <button type="button" aria-label="다음 작품" onclick="nextArtwork()" class="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
 
-        <div class="relative max-w-5xl w-full bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh]">
-            <div id="modal-media-container" class="w-full bg-black flex items-center justify-center relative min-h-[350px] max-h-[60vh] overflow-hidden p-4"></div>
-            <div class="w-full p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div class="space-y-1">
+        <div class="fullscreen-viewer relative w-screen overflow-hidden bg-black">
+            <div id="modal-media-container" class="absolute inset-0 flex items-center justify-center overflow-hidden bg-black"></div>
+            <div id="modal-info" class="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-5 pt-20 transition-opacity duration-300 motion-reduce:transition-none sm:px-8 sm:pb-8 sm:pt-28">
+                <div class="max-w-4xl space-y-1">
                     <div class="flex items-center gap-3">
                         <span id="modal-category" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-800/40"></span>
-                        <h2 id="modal-title" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+                        <h2 id="modal-title" aria-live="polite" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
                     </div>
-                    <p id="modal-desc" class="text-xs text-stone-400 leading-relaxed font-light mt-2 max-w-3xl"></p>
+                    <p id="modal-desc" class="text-xs text-stone-300 leading-relaxed font-light mt-2"></p>
                 </div>
             </div>
         </div>
@@ -163,6 +172,12 @@
 
         let currentCategory = "개인작";
         let currentItemIndex = 0;
+        let lastFocusedElement = null;
+        let touchStartX = null;
+        let touchStartY = null;
+        let viewerInfoTimer = null;
+        let bodyOverflowHiddenWasPresent = false;
+        let bodyInertStates = [];
 
         const categories = [
             { key: "개인작", name: "개인작" }, { key: "도미니어니언", name: "도미니어니언" },
@@ -188,38 +203,168 @@
             document.getElementById('artwork-count').textContent = items.length;
             grid.innerHTML = '';
             items.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = "group bg-[#181818] border border-stone-800 rounded-xl overflow-hidden cursor-pointer";
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = "group w-full text-left bg-[#181818] border border-stone-800 rounded-xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
+                card.setAttribute('aria-label', `${item.title} 상세 보기`);
                 card.onclick = () => openModal(item, index);
-                card.innerHTML = `<div class="aspect-[16/10] overflow-hidden"><img src="${item.url}" alt="${item.title}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"></div>`;
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'aspect-[16/10] overflow-hidden';
+                const image = document.createElement('img');
+                image.src = item.url;
+                image.alt = item.title;
+                image.loading = 'lazy';
+                image.decoding = 'async';
+                image.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-500';
+                thumbnail.appendChild(image);
+                card.appendChild(thumbnail);
                 grid.appendChild(card);
             });
         }
 
         function openModal(item, index) {
+            lastFocusedElement = document.activeElement;
+            bodyInertStates = Array.from(document.body.children)
+                .filter(element => element !== detailModalEl)
+                .map(element => ({ element, inert: element.inert }));
+            bodyInertStates.forEach(({ element }) => { element.inert = true; });
+            bodyOverflowHiddenWasPresent = document.body.classList.contains('overflow-hidden');
             currentItemIndex = index;
             updateModalContent();
-            document.getElementById('detail-modal').classList.remove('hidden');
-            document.getElementById('detail-modal').classList.add('flex');
+            detailModalEl.classList.remove('hidden');
+            detailModalEl.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+            requestAnimationFrame(() => document.getElementById('modal-close-button').focus());
+        }
+
+        function cleanupModalMedia() {
+            const mediaContainer = document.getElementById('modal-media-container');
+            mediaContainer.querySelectorAll('video, audio').forEach(media => {
+                media.pause();
+                media.removeAttribute('src');
+                media.load();
+            });
+            mediaContainer.replaceChildren();
         }
 
         function updateModalContent() {
             const items = projectsData.find(p => p.categoryKey === currentCategory).items;
             const item = items[currentItemIndex];
-            document.getElementById('modal-media-container').innerHTML = item.type === 'video' ? `<video src="${item.url}" controls autoplay class="max-h-[55vh]"></video>` : `<img src="${item.url}" alt="${item.title}" class="max-h-[55vh] w-auto">`;
+            const mediaContainer = document.getElementById('modal-media-container');
+            cleanupModalMedia();
+            const media = document.createElement(item.type === 'video' ? 'video' : 'img');
+            media.src = item.url;
+            media.className = item.type === 'video' ? 'fullscreen-media object-contain' : 'fullscreen-media w-auto h-auto object-contain select-none';
+            if (item.type === 'video') {
+                media.controls = true;
+                media.autoplay = true;
+            } else {
+                media.alt = item.title;
+                media.draggable = false;
+            }
+            mediaContainer.replaceChildren(media);
             document.getElementById('modal-category').textContent = item.category;
             document.getElementById('modal-title').textContent = item.title;
             document.getElementById('modal-desc').textContent = item.desc;
+            preloadAdjacentArtwork(items);
+            showViewerInfo();
+        }
+
+        function showViewerInfo() {
+            const info = document.getElementById('modal-info');
+            info.classList.remove('opacity-0');
+            window.clearTimeout(viewerInfoTimer);
+            viewerInfoTimer = window.setTimeout(() => {
+                if (!detailModalEl.classList.contains('hidden')) info.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        function preloadAdjacentArtwork(items) {
+            [-1, 1].forEach(offset => {
+                const adjacentItem = items[(currentItemIndex + offset + items.length) % items.length];
+                if (adjacentItem.type === 'image') {
+                    const image = new Image();
+                    image.src = adjacentItem.url;
+                }
+            });
         }
 
         function prevArtwork() { currentItemIndex = (currentItemIndex - 1 + projectsData.find(p => p.categoryKey === currentCategory).items.length) % projectsData.find(p => p.categoryKey === currentCategory).items.length; updateModalContent(); }
         function nextArtwork() { currentItemIndex = (currentItemIndex + 1) % projectsData.find(p => p.categoryKey === currentCategory).items.length; updateModalContent(); }
-        function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); document.getElementById('detail-modal').classList.remove('flex'); }
+        function closeModal() {
+            cleanupModalMedia();
+            detailModalEl.classList.add('hidden');
+            detailModalEl.classList.remove('flex');
+            if (!bodyOverflowHiddenWasPresent) document.body.classList.remove('overflow-hidden');
+            bodyInertStates.forEach(({ element, inert }) => { element.inert = inert; });
+            bodyInertStates = [];
+            touchStartX = null;
+            touchStartY = null;
+            window.clearTimeout(viewerInfoTimer);
+            lastFocusedElement?.focus();
+        }
         function openContactModal() { document.getElementById('contact-modal').classList.remove('hidden'); document.getElementById('contact-modal').classList.add('flex'); }
         function closeContactModal() { document.getElementById('contact-modal').classList.add('hidden'); document.getElementById('contact-modal').classList.remove('flex'); }
 
         const detailModalEl = document.getElementById('detail-modal');
-        detailModalEl.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 20) { e.deltaY > 0 ? nextArtwork() : prevArtwork(); e.preventDefault(); } }, { passive: false });
+        detailModalEl.addEventListener('pointermove', showViewerInfo);
+        detailModalEl.addEventListener('touchstart', event => {
+            touchStartX = null;
+            touchStartY = null;
+            showViewerInfo();
+            if (event.touches.length !== 1) return;
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        }, { passive: true });
+
+        detailModalEl.addEventListener('touchend', event => {
+            const startX = touchStartX;
+            const startY = touchStartY;
+            touchStartX = null;
+            touchStartY = null;
+            if (startX === null || startY === null || event.changedTouches.length !== 1) return;
+            const deltaX = event.changedTouches[0].clientX - startX;
+            const deltaY = event.changedTouches[0].clientY - startY;
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+            deltaX < 0 ? nextArtwork() : prevArtwork();
+        }, { passive: true });
+
+        detailModalEl.addEventListener('touchcancel', () => {
+            touchStartX = null;
+            touchStartY = null;
+        }, { passive: true });
+
+        document.addEventListener('keydown', event => {
+            if (detailModalEl.classList.contains('hidden')) return;
+            if (event.key === 'Tab') {
+                const focusableControls = Array.from(detailModalEl.querySelectorAll('button, [href], input, select, textarea, video[controls], [tabindex]:not([tabindex="-1"])'))
+                    .filter(element => !element.disabled && element.getClientRects().length > 0);
+                if (focusableControls.length === 0) {
+                    event.preventDefault();
+                    return;
+                }
+                const firstControl = focusableControls[0];
+                const lastControl = focusableControls[focusableControls.length - 1];
+                if (event.shiftKey && document.activeElement === firstControl) {
+                    event.preventDefault();
+                    lastControl.focus();
+                } else if (!event.shiftKey && document.activeElement === lastControl) {
+                    event.preventDefault();
+                    firstControl.focus();
+                } else if (!detailModalEl.contains(document.activeElement)) {
+                    event.preventDefault();
+                    (event.shiftKey ? lastControl : firstControl).focus();
+                }
+            }
+            if (event.key === 'Escape') closeModal();
+            const isArtworkArrow = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+            const hasModifier = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+            const mediaHasFocus = document.activeElement.matches('video[controls], audio[controls]');
+            if (isArtworkArrow && (hasModifier || mediaHasFocus)) return;
+            if (isArtworkArrow) event.preventDefault();
+            if (event.key === 'ArrowLeft') prevArtwork();
+            if (event.key === 'ArrowRight') nextArtwork();
+        });
         
         window.onload = () => { renderTabs(); renderGallery(); };
     </script>
