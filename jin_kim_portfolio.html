@@ -88,8 +88,8 @@
     </nav>
 
     <!-- Main Grid -->
-    <main class="flex-grow max-w-[1800px] mx-auto px-4 sm:px-6 py-8 w-full">
-        <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
+        <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         </div>
     </main>
 
@@ -107,9 +107,9 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
 
-        <div class="relative w-[96vw] max-w-[1800px] h-[94vh] max-h-[94vh] bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col">
-            <div id="modal-media-container" class="w-full bg-black flex flex-1 min-h-0 items-center justify-center relative overflow-hidden p-2 sm:p-4"></div>
-            <div class="w-full shrink-0 p-4 sm:p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="relative max-w-5xl w-full bg-[#181818] border border-stone-800 rounded-2xl overflow-hidden shadow-2xl my-auto flex flex-col max-h-[90vh]">
+            <div id="modal-media-container" class="w-full bg-black flex items-center justify-center relative min-h-[350px] max-h-[60vh] overflow-hidden p-4"></div>
+            <div class="w-full p-6 bg-[#1a1a1a] border-t border-stone-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-3">
                         <span id="modal-category" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-800/40"></span>
@@ -191,7 +191,7 @@
                 const card = document.createElement('div');
                 card.className = "group bg-[#181818] border border-stone-800 rounded-xl overflow-hidden cursor-pointer";
                 card.onclick = () => openModal(item, index);
-                card.innerHTML = `<div class="aspect-[16/10] overflow-hidden bg-black"><img src="${item.url}" alt="${item.title}" loading="lazy" decoding="async" class="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"></div>`;
+                card.innerHTML = `<div class="aspect-[16/10] overflow-hidden"><img src="${item.url}" alt="${item.title}" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"></div>`;
                 grid.appendChild(card);
             });
         }
@@ -206,7 +206,7 @@
         function updateModalContent() {
             const items = projectsData.find(p => p.categoryKey === currentCategory).items;
             const item = items[currentItemIndex];
-            document.getElementById('modal-media-container').innerHTML = item.type === 'video' ? `<video src="${item.url}" controls autoplay class="max-h-full max-w-full"></video>` : `<img src="${item.url}" alt="${item.title}" class="max-h-full max-w-full w-auto h-auto object-contain">`;
+            document.getElementById('modal-media-container').innerHTML = item.type === 'video' ? `<video src="${item.url}" controls autoplay class="max-h-[55vh]"></video>` : `<img src="${item.url}" alt="${item.title}" class="max-h-[55vh] w-auto">`;
             document.getElementById('modal-category').textContent = item.category;
             document.getElementById('modal-title').textContent = item.title;
             document.getElementById('modal-desc').textContent = item.desc;
