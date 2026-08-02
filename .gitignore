@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars*
+.env*
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+playwright-report/
+test-results/
+*.log

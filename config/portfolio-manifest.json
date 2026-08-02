@@ -1,0 +1,162 @@
+{
+  "protectionNotice": "PROVISIONAL: Project MP and Project DM are protected because the resume labels both categories 미공개. Review this manifest before deployment.",
+  "deploymentExclusions": {
+    "directories": ["project MP", "project DM"],
+    "files": ["MP.pdf", "DM.pdf"]
+  },
+  "projects": [
+    {
+      "id": "personal",
+      "title": "개인작",
+      "protected": false,
+      "items": [
+        { "id": "personal-01", "title": "1", "type": "image", "sourcePath": "개인작/1.jpg" },
+        { "id": "personal-02", "title": "2", "type": "image", "sourcePath": "개인작/2.jpg" },
+        { "id": "personal-03", "title": "3", "type": "image", "sourcePath": "개인작/3.jpg" },
+        { "id": "personal-04", "title": "4", "type": "image", "sourcePath": "개인작/4.jpg" },
+        { "id": "personal-05", "title": "5", "type": "image", "sourcePath": "개인작/5.jpg" },
+        { "id": "personal-06", "title": "6", "type": "image", "sourcePath": "개인작/6.jpg" },
+        { "id": "personal-07", "title": "7", "type": "image", "sourcePath": "개인작/7.jpg" },
+        { "id": "personal-08", "title": "8", "type": "image", "sourcePath": "개인작/8.jpg" },
+        { "id": "personal-09", "title": "9", "type": "image", "sourcePath": "개인작/9.jpg" },
+        { "id": "personal-10", "title": "10", "type": "image", "sourcePath": "개인작/10.jpg" },
+        { "id": "personal-11", "title": "11", "type": "image", "sourcePath": "개인작/11.jpg" },
+        { "id": "personal-12", "title": "12", "type": "image", "sourcePath": "개인작/12.jpg" },
+        { "id": "personal-13", "title": "13", "type": "image", "sourcePath": "개인작/13.jpg" },
+        { "id": "personal-14", "title": "14", "type": "image", "sourcePath": "개인작/14.jpg" },
+        { "id": "personal-15", "title": "15", "type": "image", "sourcePath": "개인작/15.jpg" },
+        { "id": "personal-16", "title": "16", "type": "image", "sourcePath": "개인작/16.jpg" }
+      ]
+    },
+    {
+      "id": "dominionion",
+      "title": "두미니어니언",
+      "protected": false,
+      "items": [
+        {
+          "id": "dominionion-trailer",
+          "title": "DoMiniOnion Trailer",
+          "type": "video",
+          "sourcePath": "두미니어니언/DoMiniOnion_Trailer.mp4",
+          "posterPath": "두미니어니언/DoMiniOnion_Trailer_poster.jpg",
+          "description": "두미니어니언 트레일러"
+        }
+      ]
+    },
+    {
+      "id": "warhaven",
+      "title": "워헤이븐",
+      "protected": false,
+      "items": [
+        { "id": "warhaven-01", "title": "01", "type": "image", "sourcePath": "워헤이븐/01.jpg" },
+        { "id": "warhaven-02", "title": "02", "type": "image", "sourcePath": "워헤이븐/02.jpg" },
+        { "id": "warhaven-03", "title": "03", "type": "image", "sourcePath": "워헤이븐/03.jpg" },
+        { "id": "warhaven-04", "title": "04", "type": "image", "sourcePath": "워헤이븐/04.jpg" },
+        { "id": "warhaven-05", "title": "05", "type": "image", "sourcePath": "워헤이븐/05.jpg" },
+        { "id": "warhaven-06", "title": "06", "type": "image", "sourcePath": "워헤이븐/06.jpg" },
+        { "id": "warhaven-07", "title": "07", "type": "image", "sourcePath": "워헤이븐/07.jpg" },
+        { "id": "warhaven-08", "title": "08", "type": "image", "sourcePath": "워헤이븐/08.jpg" },
+        { "id": "warhaven-09", "title": "09", "type": "image", "sourcePath": "워헤이븐/09.jpg" },
+        { "id": "warhaven-10", "title": "10", "type": "image", "sourcePath": "워헤이븐/10.jpg" },
+        { "id": "warhaven-11", "title": "11", "type": "image", "sourcePath": "워헤이븐/11.jpg" },
+        { "id": "warhaven-12", "title": "12", "type": "image", "sourcePath": "워헤이븐/12.jpg" },
+        { "id": "warhaven-13", "title": "13", "type": "image", "sourcePath": "워헤이븐/13.jpg" },
+        { "id": "warhaven-14", "title": "14", "type": "image", "sourcePath": "워헤이븐/14.jpg" },
+        { "id": "warhaven-15", "title": "15", "type": "image", "sourcePath": "워헤이븐/15.jpg" },
+        { "id": "warhaven-16", "title": "16", "type": "image", "sourcePath": "워헤이븐/16.jpg" },
+        { "id": "warhaven-17", "title": "17", "type": "image", "sourcePath": "워헤이븐/17.jpg" },
+        { "id": "warhaven-18", "title": "18", "type": "image", "sourcePath": "워헤이븐/18.jpg" },
+        { "id": "warhaven-19", "title": "19", "type": "image", "sourcePath": "워헤이븐/19.jpg" },
+        { "id": "warhaven-20", "title": "20", "type": "image", "sourcePath": "워헤이븐/20.jpg" },
+        { "id": "warhaven-21", "title": "21", "type": "image", "sourcePath": "워헤이븐/21.jpg" },
+        { "id": "warhaven-22", "title": "22", "type": "image", "sourcePath": "워헤이븐/22.jpg" },
+        { "id": "warhaven-23", "title": "23", "type": "image", "sourcePath": "워헤이븐/23.jpg" }
+      ]
+    },
+    {
+      "id": "game-of-thrones",
+      "title": "왕좌의게임",
+      "protected": false,
+      "items": [
+        { "id": "got-00", "title": "00", "type": "image", "sourcePath": "왕좌의게임/00.jpg" },
+        { "id": "got-00-1", "title": "00-1", "type": "image", "sourcePath": "왕좌의게임/00-1.jpg" },
+        { "id": "got-01", "title": "01", "type": "image", "sourcePath": "왕좌의게임/01.jpg" },
+        { "id": "got-02", "title": "02", "type": "image", "sourcePath": "왕좌의게임/02.jpg" },
+        { "id": "got-03", "title": "03", "type": "image", "sourcePath": "왕좌의게임/03.jpg" },
+        { "id": "got-04", "title": "04", "type": "image", "sourcePath": "왕좌의게임/04.jpg" },
+        { "id": "got-05", "title": "05", "type": "image", "sourcePath": "왕좌의게임/05.jpg" },
+        { "id": "got-06", "title": "06", "type": "image", "sourcePath": "왕좌의게임/06.jpg" },
+        { "id": "got-07", "title": "07", "type": "image", "sourcePath": "왕좌의게임/07.jpg" },
+        { "id": "got-08", "title": "08", "type": "image", "sourcePath": "왕좌의게임/08.jpg" },
+        { "id": "got-08-1", "title": "08-1", "type": "image", "sourcePath": "왕좌의게임/08-1.jpg" },
+        { "id": "got-09", "title": "09", "type": "image", "sourcePath": "왕좌의게임/09.jpg" },
+        { "id": "got-10", "title": "10", "type": "image", "sourcePath": "왕좌의게임/10.jpg" },
+        { "id": "got-11", "title": "11", "type": "image", "sourcePath": "왕좌의게임/11.jpg" },
+        { "id": "got-12", "title": "12", "type": "image", "sourcePath": "왕좌의게임/12.jpg" },
+        { "id": "got-13", "title": "13", "type": "image", "sourcePath": "왕좌의게임/13.jpg" },
+        { "id": "got-14", "title": "14", "type": "image", "sourcePath": "왕좌의게임/14.jpg" },
+        { "id": "got-14-1", "title": "14-1", "type": "image", "sourcePath": "왕좌의게임/14-1.jpg" },
+        { "id": "got-15", "title": "15", "type": "image", "sourcePath": "왕좌의게임/15.jpg" },
+        { "id": "got-16", "title": "16", "type": "image", "sourcePath": "왕좌의게임/16.jpg" },
+        { "id": "got-16-1", "title": "16-1", "type": "image", "sourcePath": "왕좌의게임/16-1.jpg" },
+        { "id": "got-17", "title": "17", "type": "image", "sourcePath": "왕좌의게임/17.jpg" },
+        { "id": "got-18", "title": "18", "type": "image", "sourcePath": "왕좌의게임/18.jpg" },
+        { "id": "got-19", "title": "19", "type": "image", "sourcePath": "왕좌의게임/19.jpg" },
+        { "id": "got-20", "title": "20", "type": "image", "sourcePath": "왕좌의게임/20.jpg" },
+        { "id": "got-21", "title": "21", "type": "image", "sourcePath": "왕좌의게임/21.jpg" },
+        { "id": "got-22", "title": "22", "type": "image", "sourcePath": "왕좌의게임/22.jpg" },
+        { "id": "got-23", "title": "23", "type": "image", "sourcePath": "왕좌의게임/23.jpg" },
+        { "id": "got-24", "title": "24", "type": "image", "sourcePath": "왕좌의게임/24.jpg" },
+        { "id": "got-25", "title": "25", "type": "image", "sourcePath": "왕좌의게임/25.jpg" },
+        { "id": "got-26", "title": "26", "type": "image", "sourcePath": "왕좌의게임/26.jpg" },
+        { "id": "got-27", "title": "27", "type": "image", "sourcePath": "왕좌의게임/27.jpg" },
+        { "id": "got-28", "title": "28", "type": "image", "sourcePath": "왕좌의게임/28.jpg" },
+        { "id": "got-29", "title": "29", "type": "image", "sourcePath": "왕좌의게임/29.jpg" },
+        { "id": "got-30", "title": "30", "type": "image", "sourcePath": "왕좌의게임/30.jpg" },
+        { "id": "got-31", "title": "31", "type": "image", "sourcePath": "왕좌의게임/31.jpg" },
+        { "id": "got-32", "title": "32", "type": "image", "sourcePath": "왕좌의게임/32.jpg" },
+        { "id": "got-33", "title": "33", "type": "image", "sourcePath": "왕좌의게임/33.jpg" },
+        { "id": "got-34", "title": "34", "type": "image", "sourcePath": "왕좌의게임/34.jpg" },
+        { "id": "got-35", "title": "35", "type": "image", "sourcePath": "왕좌의게임/35.jpg" }
+      ]
+    },
+    {
+      "id": "project-mp",
+      "title": "Project MP",
+      "protected": true,
+      "items": [
+        { "id": "project-mp-01", "title": "Project MP · 01", "type": "image", "routeId": "mp-001", "sourcePath": "project MP/24.jpg", "r2Key": "project-mp/24.jpg", "contentType": "image/jpeg" },
+        { "id": "project-mp-02", "title": "Project MP · 02", "type": "image", "routeId": "mp-002", "sourcePath": "project MP/25.jpg", "r2Key": "project-mp/25.jpg", "contentType": "image/jpeg" },
+        { "id": "project-mp-03", "title": "Project MP · 03", "type": "image", "routeId": "mp-003", "sourcePath": "project MP/26.jpg", "r2Key": "project-mp/26.jpg", "contentType": "image/jpeg" },
+        { "id": "project-mp-04", "title": "Project MP · 04", "type": "image", "routeId": "mp-004", "sourcePath": "project MP/27.jpg", "r2Key": "project-mp/27.jpg", "contentType": "image/jpeg" },
+        { "id": "project-mp-05", "title": "Project MP · 05", "type": "image", "routeId": "mp-005", "sourcePath": "project MP/28.jpg", "r2Key": "project-mp/28.jpg", "contentType": "image/jpeg" },
+        { "id": "project-mp-06", "title": "Project MP · 06", "type": "image", "routeId": "mp-006", "sourcePath": "project MP/29.jpg", "r2Key": "project-mp/29.jpg", "contentType": "image/jpeg" }
+      ]
+    },
+    {
+      "id": "project-dm",
+      "title": "Project DM",
+      "protected": true,
+      "items": [
+        { "id": "project-dm-01", "title": "Project DM · 01", "type": "image", "routeId": "dm-001", "sourcePath": "project DM/sheet_arad01.jpg", "r2Key": "project-dm/sheet_arad01.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-02", "title": "Project DM · 02", "type": "image", "routeId": "dm-002", "sourcePath": "project DM/sheet_arad02.jpg", "r2Key": "project-dm/sheet_arad02.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-03", "title": "Project DM · 03", "type": "image", "routeId": "dm-003", "sourcePath": "project DM/sheet_arad03.jpg", "r2Key": "project-dm/sheet_arad03.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-04", "title": "Project DM · 04", "type": "image", "routeId": "dm-004", "sourcePath": "project DM/sheet_arad04.jpg", "r2Key": "project-dm/sheet_arad04.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-05", "title": "Project DM · 05", "type": "image", "routeId": "dm-005", "sourcePath": "project DM/sheet_arad05.jpg", "r2Key": "project-dm/sheet_arad05.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-06", "title": "Project DM · 06", "type": "image", "routeId": "dm-006", "sourcePath": "project DM/sheet_arad06.jpg", "r2Key": "project-dm/sheet_arad06.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-07", "title": "Project DM · 07", "type": "image", "routeId": "dm-007", "sourcePath": "project DM/sheet_dolomite castle.jpg", "r2Key": "project-dm/sheet_dolomite-castle.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-08", "title": "Project DM · 08", "type": "image", "routeId": "dm-008", "sourcePath": "project DM/sheet_dolomite forest2.jpg", "r2Key": "project-dm/sheet_dolomite-forest2.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-09", "title": "Project DM · 09", "type": "image", "routeId": "dm-009", "sourcePath": "project DM/sheet_gate0.jpg", "r2Key": "project-dm/sheet_gate0.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-10", "title": "Project DM · 10", "type": "image", "routeId": "dm-010", "sourcePath": "project DM/sheet_gate1.jpg", "r2Key": "project-dm/sheet_gate1.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-11", "title": "Project DM · 11", "type": "image", "routeId": "dm-011", "sourcePath": "project DM/sheet_gate2.jpg", "r2Key": "project-dm/sheet_gate2.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-12", "title": "Project DM · 12", "type": "image", "routeId": "dm-012", "sourcePath": "project DM/Sheet_ruin01.jpg", "r2Key": "project-dm/sheet-ruin01.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-13", "title": "Project DM · 13", "type": "image", "routeId": "dm-013", "sourcePath": "project DM/Sheet_ruin02.jpg", "r2Key": "project-dm/sheet-ruin02.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-14", "title": "Project DM · 14", "type": "image", "routeId": "dm-014", "sourcePath": "project DM/Sheet_ruin03.jpg", "r2Key": "project-dm/sheet-ruin03.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-15", "title": "Project DM · 15", "type": "image", "routeId": "dm-015", "sourcePath": "project DM/Sheet_ruin04.jpg", "r2Key": "project-dm/sheet-ruin04.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-16", "title": "Project DM · 16", "type": "image", "routeId": "dm-016", "sourcePath": "project DM/sheet_watch tower1.jpg", "r2Key": "project-dm/sheet-watch-tower1.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-17", "title": "Project DM · 17", "type": "image", "routeId": "dm-017", "sourcePath": "project DM/sheet_watch tower2.jpg", "r2Key": "project-dm/sheet-watch-tower2.jpg", "contentType": "image/jpeg" },
+        { "id": "project-dm-18", "title": "Project DM · 18", "type": "image", "routeId": "dm-018", "sourcePath": "project DM/Sheet_worldmap.jpg", "r2Key": "project-dm/sheet-worldmap.jpg", "contentType": "image/jpeg" }
+      ]
+    }
+  ]
+}

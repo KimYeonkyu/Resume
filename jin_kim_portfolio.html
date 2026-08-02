@@ -1,382 +1,105 @@
-<!DOCTYPE html>
-<html lang="ko" class="scroll-smooth dark">
+<!doctype html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
     <title>JIN KIM - Environment Concept Artist Portfolio</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', '"Noto Sans KR"', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .fullscreen-viewer {
-            height: 100vh;
-            height: 100dvh;
-        }
-        .fullscreen-media {
-            max-width: 100vw;
-            max-height: 100vh;
-            max-height: 100dvh;
-        }
-    </style>
+    <link rel="stylesheet" href="/portfolio.css">
+    <script type="module" src="/portfolio.js"></script>
 </head>
-<body class="bg-[#121212] text-stone-100 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+<body>
+    <section id="entrance-screen" class="entrance" aria-labelledby="entrance-title">
+        <div class="entrance-card">
+            <div class="monogram" aria-hidden="true">JK</div>
+            <p class="eyebrow">Environment Concept Artist</p>
+            <h1 id="entrance-title">Jin Kim Portfolio</h1>
+            <p class="entrance-copy">열람 목적에 맞는 포트폴리오를 선택해 주세요.</p>
 
-    <!-- ArtStation Style Header / Profile Banner -->
-    <header class="bg-[#181818] border-b border-stone-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3 sm:space-x-4">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-lg text-white shadow-lg">
-                    JK
-                </div>
-                <div>
-                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">
-                        Jin Kim
-                    </h1>
-                    <p class="text-[11px] sm:text-xs text-stone-400">Environment Concept Artist</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                <button onclick="openContactModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-all shadow-md flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <span>Contact</span>
+            <div id="entrance-actions" class="entrance-actions">
+                <button id="interview-choice" class="choice choice-primary" type="button" aria-label="면접용 전체 포트폴리오">
+                    <span>면접용 전체 포트폴리오</span>
+                    <small>인증 후 비공개 프로젝트 포함</small>
+                </button>
+                <button id="public-choice" class="choice" type="button" aria-label="공개 포트폴리오">
+                    <span>공개 포트폴리오</span>
+                    <small>공개 작품만 둘러보기</small>
                 </button>
             </div>
-        </div>
-    </header>
 
-    <!-- Password Modal -->
-    <div id="password-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="bg-[#181818] border border-stone-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full relative shadow-2xl">
-            <button onclick="closePasswordModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <h3 class="text-lg font-bold text-white mb-2">Protected Category</h3>
-            <p class="text-xs text-stone-400 mb-6">비밀번호를 입력해주세요.</p>
-            <div class="space-y-4">
-                <input type="password" id="password-input" placeholder="비밀번호 입력" class="w-full px-4 py-3 bg-stone-900 border border-stone-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500">
-                <p id="password-error" class="text-xs text-red-400 hidden">비밀번호가 올바르지 않습니다.</p>
-                <div class="flex gap-2">
-                    <button onclick="closePasswordModal()" class="w-1/2 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-bold transition-all">취소</button>
-                    <button onclick="verifyPassword()" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md">확인</button>
+            <form id="login-form" class="login-form" aria-label="면접용 포트폴리오 로그인" hidden>
+                <button id="login-back" class="text-button login-back" type="button">선택으로 돌아가기</button>
+                <label for="password-input">비밀번호</label>
+                <div class="password-row">
+                    <input id="password-input" name="password" type="password" autocomplete="current-password" maxlength="256" required>
+                    <button class="submit-button" type="submit">확인</button>
                 </div>
-            </div>
+                <p id="login-error" class="form-message" role="alert" aria-live="polite"></p>
+            </form>
         </div>
-    </div>
+    </section>
 
-    <!-- ArtStation Filter / Tabs -->
-    <nav class="bg-[#161616] border-b border-stone-800 sticky top-16 sm:top-20 z-30 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between overflow-x-auto no-scrollbar gap-2">
-            <div id="category-tabs" class="flex items-center space-x-2 shrink-0">
-                <!-- Dynamically populated -->
-            </div>
-            <div class="text-xs text-stone-400 shrink-0 font-medium hidden sm:block">
-                <span id="artwork-count" class="text-white font-bold">0</span> Artworks
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Grid -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
-        <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-        </div>
-    </main>
-
-    <!-- Detail Modal -->
-    <div id="detail-modal" role="dialog" aria-modal="true" aria-label="Artwork viewer" class="fixed inset-0 z-50 bg-black hidden items-center justify-center overflow-hidden">
-        <button id="modal-close-button" type="button" aria-label="상세 이미지 닫기" onclick="closeModal()" class="fixed top-4 right-4 sm:top-6 sm:right-6 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-        
-        <button type="button" aria-label="이전 작품" onclick="prevArtwork()" class="fixed left-3 sm:left-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-
-        <button type="button" aria-label="다음 작품" onclick="nextArtwork()" class="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 text-stone-300 hover:text-white bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all z-30 shadow-xl backdrop-blur-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-
-        <div class="fullscreen-viewer relative w-screen overflow-hidden bg-black">
-            <div id="modal-media-container" class="absolute inset-0 flex items-center justify-center overflow-hidden bg-black"></div>
-            <div id="modal-info" class="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-5 pt-20 transition-opacity duration-300 motion-reduce:transition-none sm:px-8 sm:pb-8 sm:pt-28">
-                <div class="max-w-4xl space-y-1">
-                    <div class="flex items-center gap-3">
-                        <span id="modal-category" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-950/50 px-2.5 py-1 rounded-md border border-blue-800/40"></span>
-                        <h2 id="modal-title" aria-live="polite" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+    <div id="gallery-shell" class="site-shell" hidden>
+        <header class="site-header">
+            <div class="header-inner">
+                <div class="identity">
+                    <div class="avatar" aria-hidden="true">JK</div>
+                    <div>
+                        <p class="artist-name">Jin Kim</p>
+                        <p class="artist-role">Environment Concept Artist</p>
                     </div>
-                    <p id="modal-desc" class="text-xs text-stone-300 leading-relaxed font-light mt-2"></p>
+                </div>
+                <div class="header-actions">
+                    <span id="access-status" class="access-status" aria-live="polite"></span>
+                    <button id="relock-button" class="secondary-button" type="button" hidden>다시 잠그기</button>
+                    <button id="contact-button" class="primary-button" type="button">Contact</button>
                 </div>
             </div>
-        </div>
+        </header>
+
+        <nav class="category-nav" aria-label="작품 카테고리">
+            <div class="nav-inner">
+                <div id="category-tabs" class="category-tabs"></div>
+                <p class="artwork-total"><strong id="artwork-count">0</strong> Artworks</p>
+            </div>
+        </nav>
+
+        <main class="gallery-main">
+            <div id="gallery-error" class="page-message" role="alert" hidden></div>
+            <div id="gallery-grid" class="gallery-grid"></div>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 JIN KIM. All rights reserved.</p>
+        </footer>
     </div>
 
-    <!-- Contact Modal -->
-    <div id="contact-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="bg-[#181818] border border-stone-800 rounded-2xl p-6 sm:p-8 max-w-md w-full relative shadow-2xl">
-            <button onclick="closeContactModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <h3 class="text-lg font-bold text-white mb-2">Get in Touch</h3>
-            <div class="space-y-4">
-                <div class="p-3 bg-stone-900 border border-stone-800 rounded-xl text-xs text-stone-300 font-mono select-all">jin.kim.art@example.com</div>
-                <button onclick="closeContactModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md">닫기</button>
+    <div id="detail-modal" class="viewer" role="dialog" aria-modal="true" aria-label="Artwork viewer" hidden>
+        <button id="modal-close-button" class="viewer-control viewer-close" type="button" aria-label="상세 이미지 닫기">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <button id="previous-button" class="viewer-control viewer-previous" type="button" aria-label="이전 작품">
+            <span aria-hidden="true">&#8249;</span>
+        </button>
+        <button id="next-button" class="viewer-control viewer-next" type="button" aria-label="다음 작품">
+            <span aria-hidden="true">&#8250;</span>
+        </button>
+        <div id="modal-media-container" class="viewer-media"></div>
+        <div id="modal-info" class="viewer-info">
+            <div>
+                <span id="modal-category" class="viewer-category"></span>
+                <h2 id="modal-title"></h2>
+                <p id="modal-description"></p>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-[#141414] border-t border-stone-800 py-8 text-center text-xs text-stone-500">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>&copy; 2026 JIN KIM. All rights reserved.</p>
+    <div id="contact-modal" class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-title" hidden>
+        <div class="contact-card">
+            <button id="contact-close-button" class="contact-close" type="button" aria-label="연락처 닫기">&times;</button>
+            <h2 id="contact-title">Get in Touch</h2>
+            <a href="mailto:jinkimoffice@gmail.com">jinkimoffice@gmail.com</a>
         </div>
-    </footer>
-
-    <script>
-        const makeImageItems = (category, folder, filenames) => filenames.map((filename, index) => ({
-                    id: `${category}-${index + 1}`,
-                    title: filename.replace(/\.[^.]+$/, ''),
-                    category,
-                    url: encodeURI(`${folder}/${filename}`),
-                    type: "image",
-                    desc: `${category} · ${index + 1} / ${filenames.length}`
-                }));
-
-        const projectsData = [
-            { id: "개인작", title: "개인작", categoryKey: "개인작", items: makeImageItems("개인작", "개인작", ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg"]) },
-            { id: "두미니어니언", title: "두미니어니언", categoryKey: "두미니어니언", items: [ { id: "두미니어니언-1", title: "DoMiniOnion Trailer", category: "두미니어니언", url: encodeURI("두미니어니언/DoMiniOnion_Trailer.mp4"), poster: encodeURI("두미니어니언/DoMiniOnion_Trailer_poster.jpg"), type: "video", desc: "두미니어니언 트레일러" } ] },
-            { id: "워헤이븐", title: "워헤이븐", categoryKey: "워헤이븐", items: makeImageItems("워헤이븐", "워헤이븐", ["01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg"]) },
-            { id: "왕좌의게임", title: "왕좌의게임", categoryKey: "왕좌의게임", items: makeImageItems("왕좌의게임", "왕좌의게임", ["00.jpg", "00-1.jpg", "01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "08-1.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "14-1.jpg", "15.jpg", "16.jpg", "16-1.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg", "24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg", "30.jpg", "31.jpg", "32.jpg", "33.jpg", "34.jpg", "35.jpg"]) },
-            { id: "Project MP", title: "Project MP", categoryKey: "Project MP", items: makeImageItems("Project MP", "project MP", ["24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg"]) },
-            { id: "Project DM", title: "Project DM", categoryKey: "Project DM", items: makeImageItems("Project DM", "project DM", ["sheet_arad01.jpg", "sheet_arad02.jpg", "sheet_arad03.jpg", "sheet_arad04.jpg", "sheet_arad05.jpg", "sheet_arad06.jpg", "sheet_dolomite castle.jpg", "sheet_dolomite forest2.jpg", "sheet_gate0.jpg", "sheet_gate1.jpg", "sheet_gate2.jpg", "Sheet_ruin01.jpg", "Sheet_ruin02.jpg", "Sheet_ruin03.jpg", "Sheet_ruin04.jpg", "sheet_watch tower1.jpg", "sheet_watch tower2.jpg", "Sheet_worldmap.jpg"]) }
-        ];
-
-        let currentCategory = "개인작";
-        let currentItemIndex = 0;
-        let lastFocusedElement = null;
-        let touchStartX = null;
-        let touchStartY = null;
-        let viewerInfoTimer = null;
-        let bodyOverflowHiddenWasPresent = false;
-        let bodyInertStates = [];
-
-        const categories = [
-            { key: "개인작", name: "개인작" }, { key: "두미니어니언", name: "두미니어니언" },
-            { key: "워헤이븐", name: "워헤이븐" }, { key: "왕좌의게임", name: "왕좌의게임" },
-            { key: "Project MP", name: "Project MP" }, { key: "Project DM", name: "Project DM" }
-        ];
-
-        function renderTabs() {
-            const container = document.getElementById('category-tabs');
-            container.innerHTML = '';
-            categories.forEach(cat => {
-                const btn = document.createElement('button');
-                btn.className = `px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${currentCategory === cat.key ? 'bg-blue-600 text-white' : 'bg-[#222222] text-stone-300 hover:bg-[#2a2a2a]'}`;
-                btn.textContent = cat.name;
-                btn.onclick = () => { currentCategory = cat.key; renderTabs(); renderGallery(); };
-                container.appendChild(btn);
-            });
-        }
-
-        function renderGallery() {
-            const grid = document.getElementById('gallery-grid');
-            const items = projectsData.find(p => p.categoryKey === currentCategory).items;
-            document.getElementById('artwork-count').textContent = items.length;
-            grid.innerHTML = '';
-            items.forEach((item, index) => {
-                const card = document.createElement('button');
-                card.type = 'button';
-                card.className = "group w-full text-left bg-[#181818] border border-stone-800 rounded-xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
-                card.setAttribute('aria-label', `${item.title} 상세 보기`);
-                card.onclick = () => openModal(item, index);
-                const thumbnail = document.createElement('div');
-                thumbnail.className = 'aspect-[16/10] overflow-hidden';
-                const preview = document.createElement(item.type === 'video' ? 'video' : 'img');
-                if (item.type === 'video') {
-                    preview.muted = true;
-                    preview.preload = 'none';
-                    preview.playsInline = true;
-                    preview.poster = item.poster;
-                    preview.setAttribute('aria-hidden', 'true');
-                } else {
-                    preview.alt = item.title;
-                    preview.loading = 'lazy';
-                    preview.decoding = 'async';
-                }
-                preview.src = item.url;
-                preview.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-500';
-                thumbnail.appendChild(preview);
-                card.appendChild(thumbnail);
-                grid.appendChild(card);
-            });
-        }
-
-        function openModal(item, index) {
-            lastFocusedElement = document.activeElement;
-            bodyInertStates = Array.from(document.body.children)
-                .filter(element => element !== detailModalEl)
-                .map(element => ({ element, inert: element.inert }));
-            bodyInertStates.forEach(({ element }) => { element.inert = true; });
-            bodyOverflowHiddenWasPresent = document.body.classList.contains('overflow-hidden');
-            currentItemIndex = index;
-            updateModalContent();
-            detailModalEl.classList.remove('hidden');
-            detailModalEl.classList.add('flex');
-            document.body.classList.add('overflow-hidden');
-            requestAnimationFrame(() => document.getElementById('modal-close-button').focus());
-        }
-
-        function cleanupModalMedia() {
-            const mediaContainer = document.getElementById('modal-media-container');
-            mediaContainer.querySelectorAll('video, audio').forEach(media => {
-                media.pause();
-                media.removeAttribute('src');
-                media.load();
-            });
-            mediaContainer.replaceChildren();
-        }
-
-        function updateModalContent() {
-            const items = projectsData.find(p => p.categoryKey === currentCategory).items;
-            const item = items[currentItemIndex];
-            const mediaContainer = document.getElementById('modal-media-container');
-            cleanupModalMedia();
-            const media = document.createElement(item.type === 'video' ? 'video' : 'img');
-            media.src = item.url;
-            media.className = item.type === 'video' ? 'fullscreen-media object-contain' : 'fullscreen-media w-auto h-auto object-contain select-none';
-            if (item.type === 'video') {
-                media.controls = true;
-                media.autoplay = true;
-                media.playsInline = true;
-                media.poster = item.poster;
-            } else {
-                media.alt = item.title;
-                media.draggable = false;
-            }
-            mediaContainer.replaceChildren(media);
-            document.getElementById('modal-category').textContent = item.category;
-            document.getElementById('modal-title').textContent = item.title;
-            document.getElementById('modal-desc').textContent = item.desc;
-            preloadAdjacentArtwork(items);
-            showViewerInfo();
-        }
-
-        function showViewerInfo() {
-            const info = document.getElementById('modal-info');
-            info.classList.remove('opacity-0');
-            window.clearTimeout(viewerInfoTimer);
-            viewerInfoTimer = window.setTimeout(() => {
-                if (!detailModalEl.classList.contains('hidden')) info.classList.add('opacity-0');
-            }, 3000);
-        }
-
-        function preloadAdjacentArtwork(items) {
-            [-1, 1].forEach(offset => {
-                const adjacentItem = items[(currentItemIndex + offset + items.length) % items.length];
-                if (adjacentItem.type === 'image') {
-                    const image = new Image();
-                    image.src = adjacentItem.url;
-                }
-            });
-        }
-
-        function prevArtwork() { currentItemIndex = (currentItemIndex - 1 + projectsData.find(p => p.categoryKey === currentCategory).items.length) % projectsData.find(p => p.categoryKey === currentCategory).items.length; updateModalContent(); }
-        function nextArtwork() { currentItemIndex = (currentItemIndex + 1) % projectsData.find(p => p.categoryKey === currentCategory).items.length; updateModalContent(); }
-        function closeModal() {
-            cleanupModalMedia();
-            detailModalEl.classList.add('hidden');
-            detailModalEl.classList.remove('flex');
-            if (!bodyOverflowHiddenWasPresent) document.body.classList.remove('overflow-hidden');
-            bodyInertStates.forEach(({ element, inert }) => { element.inert = inert; });
-            bodyInertStates = [];
-            touchStartX = null;
-            touchStartY = null;
-            window.clearTimeout(viewerInfoTimer);
-            lastFocusedElement?.focus();
-        }
-        function openContactModal() { document.getElementById('contact-modal').classList.remove('hidden'); document.getElementById('contact-modal').classList.add('flex'); }
-        function closeContactModal() { document.getElementById('contact-modal').classList.add('hidden'); document.getElementById('contact-modal').classList.remove('flex'); }
-
-        const detailModalEl = document.getElementById('detail-modal');
-        detailModalEl.addEventListener('pointermove', showViewerInfo);
-        detailModalEl.addEventListener('touchstart', event => {
-            touchStartX = null;
-            touchStartY = null;
-            showViewerInfo();
-            if (event.touches.length !== 1) return;
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
-        }, { passive: true });
-
-        detailModalEl.addEventListener('touchend', event => {
-            const startX = touchStartX;
-            const startY = touchStartY;
-            touchStartX = null;
-            touchStartY = null;
-            if (startX === null || startY === null || event.changedTouches.length !== 1) return;
-            const deltaX = event.changedTouches[0].clientX - startX;
-            const deltaY = event.changedTouches[0].clientY - startY;
-            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
-            deltaX < 0 ? nextArtwork() : prevArtwork();
-        }, { passive: true });
-
-        detailModalEl.addEventListener('touchcancel', () => {
-            touchStartX = null;
-            touchStartY = null;
-        }, { passive: true });
-
-        document.addEventListener('keydown', event => {
-            if (detailModalEl.classList.contains('hidden')) return;
-            if (event.key === 'Tab') {
-                const focusableControls = Array.from(detailModalEl.querySelectorAll('button, [href], input, select, textarea, video[controls], [tabindex]:not([tabindex="-1"])'))
-                    .filter(element => !element.disabled && element.getClientRects().length > 0);
-                if (focusableControls.length === 0) {
-                    event.preventDefault();
-                    return;
-                }
-                const firstControl = focusableControls[0];
-                const lastControl = focusableControls[focusableControls.length - 1];
-                if (event.shiftKey && document.activeElement === firstControl) {
-                    event.preventDefault();
-                    lastControl.focus();
-                } else if (!event.shiftKey && document.activeElement === lastControl) {
-                    event.preventDefault();
-                    firstControl.focus();
-                } else if (!detailModalEl.contains(document.activeElement)) {
-                    event.preventDefault();
-                    (event.shiftKey ? lastControl : firstControl).focus();
-                }
-            }
-            if (event.key === 'Escape') closeModal();
-            const isArtworkArrow = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
-            const hasModifier = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
-            const mediaHasFocus = document.activeElement.matches('video[controls], audio[controls]');
-            if (isArtworkArrow && (hasModifier || mediaHasFocus)) return;
-            if (isArtworkArrow) event.preventDefault();
-            if (event.key === 'ArrowLeft') prevArtwork();
-            if (event.key === 'ArrowRight') nextArtwork();
-        });
-        
-        window.onload = () => { renderTabs(); renderGallery(); };
-    </script>
+    </div>
 </body>
 </html>
