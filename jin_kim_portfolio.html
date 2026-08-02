@@ -163,7 +163,7 @@
 
         const projectsData = [
             { id: "개인작", title: "개인작", categoryKey: "개인작", items: makeImageItems("개인작", "개인작", ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg"]) },
-            { id: "도미니어니언", title: "도미니어니언", categoryKey: "도미니어니언", items: [ { id: 11, title: "시네마틱", category: "도미니어니언", url: "https://www.w3schools.com/html/mov_bbb.mp4", type: "video", desc: "실시간 엔진." } ] },
+            { id: "두미니어니언", title: "두미니어니언", categoryKey: "두미니어니언", items: [ { id: "두미니어니언-1", title: "DoMiniOnion Trailer", category: "두미니어니언", url: encodeURI("두미니어니언/DoMiniOnion_Trailer.mp4"), poster: encodeURI("두미니어니언/DoMiniOnion_Trailer_poster.jpg"), type: "video", desc: "두미니어니언 트레일러" } ] },
             { id: "워헤이븐", title: "워헤이븐", categoryKey: "워헤이븐", items: makeImageItems("워헤이븐", "워헤이븐", ["01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg", "16.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg"]) },
             { id: "왕좌의게임", title: "왕좌의게임", categoryKey: "왕좌의게임", items: makeImageItems("왕좌의게임", "왕좌의게임", ["00.jpg", "00-1.jpg", "01.jpg", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "06.jpg", "07.jpg", "08.jpg", "08-1.jpg", "09.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "14-1.jpg", "15.jpg", "16.jpg", "16-1.jpg", "17.jpg", "18.jpg", "19.jpg", "20.jpg", "21.jpg", "22.jpg", "23.jpg", "24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg", "30.jpg", "31.jpg", "32.jpg", "33.jpg", "34.jpg", "35.jpg"]) },
             { id: "Project MP", title: "Project MP", categoryKey: "Project MP", items: makeImageItems("Project MP", "project MP", ["24.jpg", "25.jpg", "26.jpg", "27.jpg", "28.jpg", "29.jpg"]) },
@@ -180,7 +180,7 @@
         let bodyInertStates = [];
 
         const categories = [
-            { key: "개인작", name: "개인작" }, { key: "도미니어니언", name: "도미니어니언" },
+            { key: "개인작", name: "개인작" }, { key: "두미니어니언", name: "두미니어니언" },
             { key: "워헤이븐", name: "워헤이븐" }, { key: "왕좌의게임", name: "왕좌의게임" },
             { key: "Project MP", name: "Project MP" }, { key: "Project DM", name: "Project DM" }
         ];
@@ -210,13 +210,21 @@
                 card.onclick = () => openModal(item, index);
                 const thumbnail = document.createElement('div');
                 thumbnail.className = 'aspect-[16/10] overflow-hidden';
-                const image = document.createElement('img');
-                image.src = item.url;
-                image.alt = item.title;
-                image.loading = 'lazy';
-                image.decoding = 'async';
-                image.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-500';
-                thumbnail.appendChild(image);
+                const preview = document.createElement(item.type === 'video' ? 'video' : 'img');
+                if (item.type === 'video') {
+                    preview.muted = true;
+                    preview.preload = 'none';
+                    preview.playsInline = true;
+                    preview.poster = item.poster;
+                    preview.setAttribute('aria-hidden', 'true');
+                } else {
+                    preview.alt = item.title;
+                    preview.loading = 'lazy';
+                    preview.decoding = 'async';
+                }
+                preview.src = item.url;
+                preview.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-500';
+                thumbnail.appendChild(preview);
                 card.appendChild(thumbnail);
                 grid.appendChild(card);
             });
@@ -258,6 +266,8 @@
             if (item.type === 'video') {
                 media.controls = true;
                 media.autoplay = true;
+                media.playsInline = true;
+                media.poster = item.poster;
             } else {
                 media.alt = item.title;
                 media.draggable = false;
