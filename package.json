@@ -1,0 +1,28 @@
+{
+  "name": "jin-kim-self-hosted-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "npm run build:public && npm run build:server",
+    "build:public": "npm run manifest:check && node scripts/build.mjs",
+    "build:server": "node scripts/build-server.mjs",
+    "manifest:public": "node scripts/generate-public-manifest.mjs",
+    "manifest:check": "node scripts/generate-public-manifest.mjs --check",
+    "check:dist": "node scripts/check-dist.mjs",
+    "start": "NODE_ENV=production node server-dist/server.mjs",
+    "test:server": "vitest run tests/server tests/scripts/public-manifest.test.ts",
+    "test:browser": "npm run build:public && PYTHONDONTWRITEBYTECODE=1 pytest -q -p no:cacheprovider tests/test_portfolio_access.py tests/test_portfolio_video.py",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "esbuild": "0.28.1",
+    "tailwindcss": "3.4.17",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

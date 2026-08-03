@@ -1,0 +1,13 @@
+node_modules/
+dist/
+server-dist/
+worker-configuration.d.ts
+.wrangler/
+.env*
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+playwright-report/
+test-results/
+*.log
