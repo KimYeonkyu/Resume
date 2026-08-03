@@ -168,6 +168,8 @@ def test_ci_deploys_only_the_verified_dist_artifact_to_github_pages() -> None:
     assert "actions/deploy-pages@v4" in workflow
     assert "pages: write" in workflow
     assert "id-token: write" in workflow
+    assert 'build_type=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type)' in workflow
+    assert 'if [ "$build_type" != "workflow" ]' in workflow
     assert workflow.index("npm run check:dist") < workflow.index("actions/upload-pages-artifact@v3")
 
 
@@ -180,6 +182,8 @@ def test_runbook_requires_pages_fail_closed_gate_before_protected_origin() -> No
     assert "404` or `410" in runbook
     assert "disable GitHub Pages" in runbook
     assert "Do not expose the protected origin before this gate passes" in runbook
+    assert "Before merging the release commit" in runbook
+    assert "`build_type=workflow`" in runbook
 
 
 def test_production_secrets_are_keychain_only_and_server_is_loopback_only() -> None:
@@ -233,6 +237,17 @@ def test_public_repository_tree_contains_no_protected_source_media() -> None:
         assert not (REPO_ROOT / item["sourcePath"]).exists(), item["sourcePath"]
     for file_name in CONFIGURATION["deploymentExclusions"]["files"]:
         assert not (REPO_ROOT / file_name).exists(), file_name
+
+
+def test_every_excluded_protected_pdf_has_its_historical_byte_hash_pinned() -> None:
+    expected = {
+        "warhaven.pdf": "11e53d5a5adc96c42caed21aa01e4eaacba8cfaae3cdbccca5a6428ab097b7fe",
+        "MP.pdf": "a93af17ca3718c94e62322bd007292a030cabea4f0d6feb903305c0dc0587488",
+        "DM.pdf": "518ca3cf8cc89389b2e34174008c0cb067a7ef2350b33034fb367dff1c7c66bb",
+    }
+    exclusions = CONFIGURATION["deploymentExclusions"]
+    assert exclusions["protectedFileHashes"] == expected
+    assert {path for path in exclusions["files"] if path.lower().endswith(".pdf")} == set(expected)
 
 
 def test_dist_checker_rejects_an_excluded_protected_filename_reference() -> None:
@@ -327,6 +342,45 @@ def test_dist_checker_rejects_protected_bytes_renamed_to_an_allowed_public_path(
     finally:
         manifest_path.write_bytes(original_manifest)
         output_file.write_bytes(original_output)
+
+
+def test_dist_checker_rejects_declared_protected_pdf_bytes_at_an_allowed_pdf_path() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    manifest_path = REPO_ROOT / "config" / "portfolio-manifest.json"
+    output_file = DIST / "GOT.pdf"
+    original_manifest = manifest_path.read_bytes()
+    original_output = output_file.read_bytes()
+    protected_pdf = b"%PDF-1.7\nsynthetic protected aggregate\n%%EOF\n"
+    modified = json.loads(original_manifest)
+    modified["deploymentExclusions"]["protectedFileHashes"]["warhaven.pdf"] = hashlib.sha256(
+        protected_pdf
+    ).hexdigest()
+    try:
+        manifest_path.write_text(json.dumps(modified, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        output_file.write_bytes(protected_pdf)
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "protected media bytes" in check.stderr
+    finally:
+        manifest_path.write_bytes(original_manifest)
+        output_file.write_bytes(original_output)
+
+
+def test_dist_checker_requires_a_hash_for_every_excluded_pdf() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    manifest_path = REPO_ROOT / "config" / "portfolio-manifest.json"
+    original_manifest = manifest_path.read_bytes()
+    modified = json.loads(original_manifest)
+    modified["deploymentExclusions"]["protectedFileHashes"].pop("warhaven.pdf")
+    try:
+        manifest_path.write_text(json.dumps(modified, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "missing protected hash" in check.stderr.lower()
+    finally:
+        manifest_path.write_bytes(original_manifest)
 
 
 def test_dist_checker_rejects_every_unexpected_output_path() -> None:

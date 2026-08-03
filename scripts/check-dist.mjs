@@ -79,7 +79,29 @@ for (const item of protectedItems) {
     throw new Error("Protected manifest item is missing required self-hosted metadata");
   }
 }
-const protectedHashes = new Set(protectedItems.map((item) => item.sha256));
+const protectedFileHashes = Object.entries(
+  manifest.deploymentExclusions.protectedFileHashes ?? {},
+);
+for (const file of manifest.deploymentExclusions.files.filter((value) =>
+  value.toLowerCase().endsWith(".pdf"),
+)) {
+  if (!Object.hasOwn(manifest.deploymentExclusions.protectedFileHashes ?? {}, file)) {
+    throw new Error("Excluded protected PDF is missing protected hash metadata");
+  }
+}
+for (const [file, digest] of protectedFileHashes) {
+  if (
+    !manifest.deploymentExclusions.files.includes(file) ||
+    typeof digest !== "string" ||
+    !/^[a-f0-9]{64}$/u.test(digest)
+  ) {
+    throw new Error("Protected aggregate file hash metadata is invalid");
+  }
+}
+const protectedHashes = new Set([
+  ...protectedItems.map((item) => item.sha256),
+  ...protectedFileHashes.map(([, digest]) => digest),
+]);
 const publicBasenames = new Set(
   manifest.projects
     .flatMap((project) =>

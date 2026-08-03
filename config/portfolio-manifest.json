@@ -2,7 +2,12 @@
   "protectionNotice": "Owner-confirmed protection list: Warhaven 12-20 and 22, Project MP 25-29, and every Project DM image. Protected originals live only under the external Mac mini media root; PDFs containing protected work are excluded from public delivery.",
   "deploymentExclusions": {
     "directories": ["project DM"],
-    "files": ["warhaven.pdf", "MP.pdf", "DM.pdf", "워헤이븐/12.jpg", "워헤이븐/13.jpg", "워헤이븐/14.jpg", "워헤이븐/15.jpg", "워헤이븐/16.jpg", "워헤이븐/17.jpg", "워헤이븐/18.jpg", "워헤이븐/19.jpg", "워헤이븐/20.jpg", "워헤이븐/22.jpg", "project MP/25.jpg", "project MP/26.jpg", "project MP/27.jpg", "project MP/28.jpg", "project MP/29.jpg"]
+    "files": ["warhaven.pdf", "MP.pdf", "DM.pdf", "워헤이븐/12.jpg", "워헤이븐/13.jpg", "워헤이븐/14.jpg", "워헤이븐/15.jpg", "워헤이븐/16.jpg", "워헤이븐/17.jpg", "워헤이븐/18.jpg", "워헤이븐/19.jpg", "워헤이븐/20.jpg", "워헤이븐/22.jpg", "project MP/25.jpg", "project MP/26.jpg", "project MP/27.jpg", "project MP/28.jpg", "project MP/29.jpg"],
+    "protectedFileHashes": {
+      "warhaven.pdf": "11e53d5a5adc96c42caed21aa01e4eaacba8cfaae3cdbccca5a6428ab097b7fe",
+      "MP.pdf": "a93af17ca3718c94e62322bd007292a030cabea4f0d6feb903305c0dc0587488",
+      "DM.pdf": "518ca3cf8cc89389b2e34174008c0cb067a7ef2350b33034fb367dff1c7c66bb"
+    }
   },
   "projects": [
     {

@@ -40,6 +40,8 @@ Do not copy the external originals into either output. Review `git status --shor
 
 The main-branch CI must deploy the exact `dist/` artifact that passed `npm run check:dist`; do not publish the repository root or reconstruct the artifact in a separate deployment step.
 
+Before merging the release commit, an owner or administrator must change **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. Verify `gh api repos/OWNER/REPO/pages --jq .build_type` returns `workflow` (recorded as `build_type=workflow`). Do not merge while the setting is `legacy`: a branch-root build bypasses `check:dist` and publishes repository metadata even if the Actions job later fails.
+
 Before opening the protected hostname to interview traffic:
 
 1. Confirm the latest GitHub Pages build reports `built` for the intended main commit.
