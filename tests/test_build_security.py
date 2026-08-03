@@ -3,14 +3,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import secrets
 import subprocess
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DIST = REPO_ROOT / "dist"
+SERVER_DIST = REPO_ROOT / "server-dist"
 CONFIGURATION = json.loads(
     (REPO_ROOT / "config" / "portfolio-manifest.json").read_text(encoding="utf-8")
 )
@@ -38,10 +39,44 @@ def inventory(directory: Path) -> list[tuple[str, str]]:
     ]
 
 
+def item_is_protected(project: dict[str, Any], item: dict[str, Any]) -> bool:
+    return project["protected"] is True or item.get("protected") is True
+
+
+def protected_items() -> list[dict[str, Any]]:
+    return [
+        item
+        for project in CONFIGURATION["projects"]
+        for item in project["items"]
+        if item_is_protected(project, item)
+    ]
+
+
+def public_asset_paths() -> set[str]:
+    paths: set[str] = set()
+    for project in CONFIGURATION["projects"]:
+        for item in project["items"]:
+            if item_is_protected(project, item):
+                continue
+            paths.add(item["sourcePath"])
+            if item.get("posterPath"):
+                paths.add(item["posterPath"])
+    return paths
+
+
+def combined_public_text() -> str:
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in DIST.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".css", ".html", ".js", ".json"}
+    )
+
+
 def test_build_is_deterministic_and_contains_only_public_assets() -> None:
     runtime_sentinels = {
-        "PORTFOLIO_PASSWORD_HASH": secrets.token_urlsafe(48),
-        "SESSION_SECRET": secrets.token_urlsafe(48),
+        "PORTFOLIO_PASSWORD_VERIFIER": "hmac-sha256-v1$SENTINEL_VERIFIER_MUST_NOT_LEAK",
+        "PORTFOLIO_PASSWORD_PEPPER": "pepper-v1$SENTINEL_PEPPER_MUST_NOT_LEAK",
+        "SESSION_SECRET": "session-v1$SENTINEL_SESSION_MUST_NOT_LEAK",
     }
     first = run_npm("build", runtime_sentinels)
     assert first.returncode == 0, first.stderr
@@ -51,100 +86,163 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
     assert second.returncode == 0, second.stderr
     assert inventory(DIST) == first_inventory
 
-    assert (DIST / "index.html").is_file()
-    assert (DIST / "jin_kim_portfolio.html").is_file()
-    assert (DIST / "portfolio.js").is_file()
-    assert (DIST / "portfolio.css").is_file()
-    assert (DIST / "두미니어니언" / "DoMiniOnion_Trailer.mp4").is_file()
+    for required in (
+        "index.html",
+        "jin_kim_portfolio.html",
+        "portfolio.js",
+        "portfolio.css",
+        "public-portfolio-manifest.json",
+        "두미니어니언/DoMiniOnion_Trailer.mp4",
+    ):
+        assert (DIST / required).is_file()
 
     for entry in DIST.rglob("*"):
         assert not entry.is_symlink()
-    assert not (DIST / "src").exists()
-    assert not (DIST / "config").exists()
-    assert not (DIST / "tests").exists()
+    for forbidden_directory in ("src", "config", "tests", ".git", ".wrangler"):
+        assert not (DIST / forbidden_directory).exists()
 
     for excluded_directory in CONFIGURATION["deploymentExclusions"]["directories"]:
         assert not (DIST / excluded_directory).exists()
     for excluded_file in CONFIGURATION["deploymentExclusions"]["files"]:
         assert not (DIST / excluded_file).exists()
 
-    output_hashes = {digest for _, digest in first_inventory}
-    protected_sources = [
-        REPO_ROOT / item["sourcePath"]
-        for project in CONFIGURATION["projects"]
-        if project["protected"]
-        for item in project["items"]
-    ] + [
-        REPO_ROOT / name for name in CONFIGURATION["deploymentExclusions"]["files"]
-    ]
-    for source in protected_sources:
-        assert source.is_file()
-        assert hashlib.sha256(source.read_bytes()).hexdigest() not in output_hashes
+    for item in protected_items():
+        assert not (REPO_ROOT / item["sourcePath"]).exists()
+        assert not (DIST / item["sourcePath"]).exists()
+    for relative_path in public_asset_paths():
+        assert (REPO_ROOT / relative_path).is_file(), relative_path
+        assert (DIST / relative_path).is_file(), relative_path
 
-    combined_text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in DIST.rglob("*")
-        if path.is_file() and path.suffix.lower() in {".css", ".html", ".js", ".json"}
-    )
-    for project in CONFIGURATION["projects"]:
-        if not project["protected"]:
-            continue
-        for item in project["items"]:
-            encoded_path = "/".join(quote(part, safe="") for part in item["sourcePath"].split("/"))
-            for forbidden in (item["sourcePath"], encoded_path, item["r2Key"], item["routeId"]):
-                assert forbidden not in combined_text
+    public_text = combined_public_text()
+    for item in protected_items():
+        encoded_once = "/".join(quote(part, safe="") for part in item["sourcePath"].split("/"))
+        encoded_twice = "/".join(quote(part, safe="") for part in encoded_once.split("/"))
+        for forbidden in (
+            item["sourcePath"],
+            encoded_once,
+            encoded_twice,
+            item["routeId"],
+            item["sha256"],
+        ):
+            assert forbidden not in public_text
     for sentinel in runtime_sentinels.values():
-        assert sentinel not in combined_text
+        assert sentinel not in public_text
 
     check = run_npm("check:dist")
     assert check.returncode == 0, check.stderr
 
 
-def test_wrangler_uses_worker_first_private_bindings_without_plaintext_secrets() -> None:
-    configuration = json.loads((REPO_ROOT / "wrangler.jsonc").read_text(encoding="utf-8"))
+def test_self_hosted_runtime_has_no_cloudflare_deployment_path() -> None:
+    for removed_path in (
+        "wrangler.jsonc",
+        "src/worker.ts",
+        "vitest.worker.config.ts",
+        "scripts/upload-protected-media.mjs",
+        "docs/cloudflare-deployment.md",
+    ):
+        assert not (REPO_ROOT / removed_path).exists()
 
-    assert configuration["main"] == "src/worker.ts"
-    assert configuration["assets"] == {
-        "binding": "ASSETS",
-        "directory": "./dist",
-        "run_worker_first": True,
-    }
-    assert configuration["r2_buckets"][0]["binding"] == "PROTECTED_MEDIA"
-    assert configuration["ratelimits"] == [
-        {
-            "name": "LOGIN_RATE_LIMITER",
-            "namespace_id": "2026080201",
-            "simple": {"limit": 10, "period": 60},
-        }
-    ]
-    serialized_vars = json.dumps(configuration.get("vars", {}))
-    assert "PORTFOLIO_PASSWORD_HASH" not in serialized_vars
-    assert "SESSION_SECRET" not in serialized_vars
+    package = json.loads((REPO_ROOT / "package.json").read_text(encoding="utf-8"))
+    scripts = package["scripts"]
+    for removed_script in ("deploy", "r2:upload", "test:worker", "test:runtime"):
+        assert removed_script not in scripts
+    assert scripts["start"] == "NODE_ENV=production node server-dist/server.mjs"
+    assert scripts["build:server"] == "node scripts/build-server.mjs"
 
-
-def test_r2_upload_helper_defaults_to_a_non_mutating_plan() -> None:
-    result = subprocess.run(
-        ["node", "scripts/upload-protected-media.mjs"],
-        cwd=REPO_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            REPO_ROOT / "package.json",
+            REPO_ROOT / ".github" / "workflows" / "ci.yml",
+            REPO_ROOT / "docs" / "mac-mini-deployment.md",
+        )
     )
+    for forbidden in ("wrangler deploy", "test:worker", "test:runtime", "R2 bucket"):
+        assert forbidden not in combined
 
-    assert result.returncode == 0, result.stderr
-    assert "24 protected objects" in result.stdout
-    assert "No uploads performed" in result.stdout
+
+def test_ci_deploys_only_the_verified_dist_artifact_to_github_pages() -> None:
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "actions/upload-pages-artifact@v3" in workflow
+    assert "path: dist" in workflow
+    assert "actions/deploy-pages@v4" in workflow
+    assert "pages: write" in workflow
+    assert "id-token: write" in workflow
+    assert workflow.index("npm run check:dist") < workflow.index("actions/upload-pages-artifact@v3")
+
+
+def test_runbook_requires_pages_fail_closed_gate_before_protected_origin() -> None:
+    runbook = (REPO_ROOT / "docs" / "mac-mini-deployment.md").read_text(encoding="utf-8")
+    pages_gate = runbook.index("Publish and verify the guest-safe Pages build")
+    protected_start = runbook.index("Start and verify the protected origin")
+    assert pages_gate < protected_start
+    assert "exact `dist/` artifact" in runbook
+    assert "404` or `410" in runbook
+    assert "disable GitHub Pages" in runbook
+    assert "Do not expose the protected origin before this gate passes" in runbook
+
+
+def test_production_secrets_are_keychain_only_and_server_is_loopback_only() -> None:
+    runtime_source = (REPO_ROOT / "src" / "runtime-config.ts").read_text(encoding="utf-8")
+    server_source = (REPO_ROOT / "src" / "node-server.ts").read_text(encoding="utf-8")
+    assert "Production secrets must come from macOS Keychain" in runtime_source
+    assert '"/usr/bin/security"' in runtime_source
+    assert "com.jinkim.portfolio.password-verifier" in runtime_source
+    assert "com.jinkim.portfolio.password-pepper" in runtime_source
+    assert "com.jinkim.portfolio.session-secret" in runtime_source
+    assert 'host !== "127.0.0.1" && host !== "::1"' in server_source
+    assert "Requests must arrive through the loopback reverse proxy" in server_source
+
+
+def test_deployment_defaults_disable_caddy_admin_and_use_the_same_backend_port() -> None:
+    runtime_source = (REPO_ROOT / "src" / "runtime-config.ts").read_text(encoding="utf-8")
+    caddy_source = (REPO_ROOT / "deploy" / "Caddyfile.example").read_text(encoding="utf-8")
+    assert 'integerSetting(environment, "PORTFOLIO_PORT", 8_794' in runtime_source
+    assert "admin off" in caddy_source
+    assert "reverse_proxy 127.0.0.1:8794" in caddy_source
+
+
+def test_password_verification_is_versioned_keyed_and_constant_time() -> None:
+    security_source = (REPO_ROOT / "src" / "security.ts").read_text(encoding="utf-8")
+    assert 'createHmac("sha256", pepper)' in security_source
+    assert "timingSafeEqual(candidate, expectedVerifier)" in security_source
+    assert 'parseEnvelope(value, "hmac-sha256-v1")' in security_source
+    assert 'parseEnvelope(value, "pepper-v1")' in security_source
+    assert "PBKDF2" not in security_source
+    assert "PORTFOLIO_PASSWORD_DIGEST" not in security_source
+
+
+def test_server_bundle_builds_without_embedding_runtime_secret_values() -> None:
+    sentinels = {
+        "PORTFOLIO_PASSWORD_VERIFIER": "hmac-sha256-v1$BUILD_SENTINEL_VERIFIER",
+        "PORTFOLIO_PASSWORD_PEPPER": "pepper-v1$BUILD_SENTINEL_PEPPER",
+        "SESSION_SECRET": "session-v1$BUILD_SENTINEL_SESSION",
+    }
+    build = run_npm("build:server", sentinels)
+    assert build.returncode == 0, build.stderr
+    bundle = SERVER_DIST / "server.mjs"
+    assert bundle.is_file() and not bundle.is_symlink()
+    text = bundle.read_text(encoding="utf-8")
+    for sentinel in sentinels.values():
+        assert sentinel not in text
+
+
+def test_public_repository_tree_contains_no_protected_source_media() -> None:
+    assert len(protected_items()) == 33
+    for item in protected_items():
+        assert not (REPO_ROOT / item["sourcePath"]).exists(), item["sourcePath"]
+    for file_name in CONFIGURATION["deploymentExclusions"]["files"]:
+        assert not (REPO_ROOT / file_name).exists(), file_name
 
 
 def test_dist_checker_rejects_an_excluded_protected_filename_reference() -> None:
-    build = run_npm("build")
+    build = run_npm("build:public")
     assert build.returncode == 0, build.stderr
     injected_file = DIST / "injected-protected-reference.js"
     injected_file.write_text(
         CONFIGURATION["deploymentExclusions"]["files"][0],
         encoding="utf-8",
     )
-
     try:
         check = run_npm("check:dist")
         assert check.returncode != 0
@@ -154,12 +252,9 @@ def test_dist_checker_rejects_an_excluded_protected_filename_reference() -> None
 
 
 def test_dist_checker_decodes_protected_paths_despite_unrelated_percent_signs() -> None:
-    build = run_npm("build")
+    build = run_npm("build:public")
     assert build.returncode == 0, build.stderr
-    protected_project = next(
-        project for project in CONFIGURATION["projects"] if project["protected"]
-    )
-    source_path = protected_project["items"][0]["sourcePath"]
+    source_path = protected_items()[0]["sourcePath"]
     encoded_once = "/".join(quote(part, safe="") for part in source_path.split("/"))
     encoded_twice = "/".join(quote(part, safe="") for part in encoded_once.split("/"))
     injected_file = DIST / "injected-double-encoded-reference.css"
@@ -167,10 +262,82 @@ def test_dist_checker_decodes_protected_paths_despite_unrelated_percent_signs() 
         f'.decoy {{ width: 100%; background-image: url("{encoded_twice}"); }}',
         encoding="utf-8",
     )
-
     try:
         check = run_npm("check:dist")
         assert check.returncode != 0
         assert "protected media metadata" in check.stderr
+    finally:
+        injected_file.unlink(missing_ok=True)
+
+
+def test_dist_checker_rejects_item_level_protected_route_metadata() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    selected_item = next(
+        item
+        for project in CONFIGURATION["projects"]
+        for item in project["items"]
+        if item.get("protected") is True
+    )
+    output_file = DIST / "portfolio.css"
+    original = output_file.read_bytes()
+    output_file.write_bytes(original + f"\n/* {selected_item['routeId']} */\n".encode())
+    try:
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "protected media metadata" in check.stderr
+    finally:
+        output_file.write_bytes(original)
+
+
+def test_dist_checker_rejects_protected_reference_in_an_arbitrary_extension() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    injected_file = DIST / "injected-protected-reference.txt"
+    injected_file.write_text(protected_items()[0]["sourcePath"], encoding="utf-8")
+    try:
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+    finally:
+        injected_file.unlink(missing_ok=True)
+
+
+def test_dist_checker_rejects_protected_bytes_renamed_to_an_allowed_public_path() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    manifest_path = REPO_ROOT / "config" / "portfolio-manifest.json"
+    output_file = DIST / "portfolio.css"
+    original_manifest = manifest_path.read_bytes()
+    original_output = output_file.read_bytes()
+    protected_bytes = b"synthetic protected media bytes without identifying text"
+    modified = json.loads(original_manifest)
+    selected = next(
+        item
+        for project in modified["projects"]
+        for item in project["items"]
+        if item_is_protected(project, item)
+    )
+    selected["sha256"] = hashlib.sha256(protected_bytes).hexdigest()
+    try:
+        manifest_path.write_text(json.dumps(modified, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        output_file.write_bytes(protected_bytes)
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "protected media bytes" in check.stderr
+    finally:
+        manifest_path.write_bytes(original_manifest)
+        output_file.write_bytes(original_output)
+
+
+def test_dist_checker_rejects_every_unexpected_output_path() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    protected_basename = Path(protected_items()[0]["sourcePath"]).name
+    injected_file = DIST / protected_basename
+    injected_file.write_bytes(b"synthetic-unrelated-bytes")
+    try:
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "unexpected file" in check.stderr
     finally:
         injected_file.unlink(missing_ok=True)

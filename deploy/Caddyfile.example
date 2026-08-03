@@ -1,0 +1,25 @@
+# Replace this hostname before use. Caddy terminates public HTTPS; Node remains loopback-only.
+{
+	admin off
+}
+
+portfolio.example.com {
+	encode zstd gzip
+
+	# Keep the backend liveness route private while retaining active upstream checks.
+	@health path /healthz
+	respond @health 404
+
+	reverse_proxy 127.0.0.1:8794 {
+		# Overwrite client-supplied proxy headers at the only trusted boundary.
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto https
+		header_down -Server
+
+		health_uri /healthz
+		health_interval 30s
+		health_timeout 5s
+	}
+}

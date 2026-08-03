@@ -355,7 +355,8 @@ input:focus-visible {
 
 .tab-lock {
     margin-left: 6px;
-    opacity: .7;
+    opacity: .72;
+    filter: grayscale(1);
 }
 
 .artwork-total {
@@ -403,6 +404,8 @@ input:focus-visible {
 }
 
 .artwork-frame {
+    display: block;
+    width: 100%;
     overflow: hidden;
     background: #0a0a0a;
 }
@@ -450,6 +453,7 @@ input:focus-visible {
     display: block;
     margin-bottom: 10px;
     font-size: 22px;
+    filter: grayscale(1);
 }
 
 .locked-art strong,
@@ -464,7 +468,7 @@ input:focus-visible {
 
 .locked-art small {
     margin-top: 6px;
-    color: #57534e;
+    color: #a8a29e;
     font-size: 10px;
 }
 

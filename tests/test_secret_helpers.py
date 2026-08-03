@@ -16,10 +16,13 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HASH_PATTERN = re.compile(
-    rb"pbkdf2-sha256\$600000\$([A-Za-z0-9_-]{22})\$([A-Za-z0-9_-]{43})"
+VERIFIER_PATTERN = re.compile(
+    rb"PORTFOLIO_PASSWORD_VERIFIER=hmac-sha256-v1\$([A-Za-z0-9_-]{43})"
 )
-SECRET_PATTERN = re.compile(r"[A-Za-z0-9_-]{43,}")
+PEPPER_PATTERN = re.compile(
+    rb"PORTFOLIO_PASSWORD_PEPPER=pepper-v1\$([A-Za-z0-9_-]{43})"
+)
+SESSION_PATTERN = re.compile(r"session-v1\$([A-Za-z0-9_-]{43})")
 
 
 def read_until(master_fd: int, marker: bytes, output: bytearray) -> None:
@@ -50,16 +53,16 @@ def collect_until_exit(child_pid: int, master_fd: int, output: bytearray) -> int
     pytest.fail("No-echo helper did not exit after confirmation", pytrace=False)
 
 
-def test_password_hash_helper_reads_twice_without_echo_and_writes_no_file(
+def test_password_secret_helper_reads_twice_without_echo_and_writes_no_file(
     tmp_path: Path,
 ) -> None:
-    entered_password = base64.urlsafe_b64encode(os.urandom(30)).rstrip(b"=")
+    entered_password = b"V" * 8
     child_pid, master_fd = pty.fork()
     if child_pid == 0:
         os.chdir(tmp_path)
         os.execv(
             sys.executable,
-            [sys.executable, str(REPO_ROOT / "scripts" / "generate-password-hash.py")],
+            [sys.executable, str(REPO_ROOT / "scripts" / "generate-password-secrets.py")],
         )
 
     output = bytearray()
@@ -75,18 +78,19 @@ def test_password_hash_helper_reads_twice_without_echo_and_writes_no_file(
     assert os.waitstatus_to_exitcode(status) == 0
     if entered_password in output:
         pytest.fail("Password helper echoed credential input", pytrace=False)
-    match = HASH_PATTERN.search(output)
-    if match is None:
-        pytest.fail("Password helper did not emit the required hash envelope", pytrace=False)
-    salt = base64.urlsafe_b64decode(match.group(1) + b"==")
-    digest = base64.urlsafe_b64decode(match.group(2) + b"=")
-    expected = hashlib.pbkdf2_hmac("sha256", entered_password, salt, 600_000, dklen=32)
-    if not hmac.compare_digest(digest, expected):
-        pytest.fail("Password helper produced an invalid derived value", pytrace=False)
+    verifier_match = VERIFIER_PATTERN.search(output)
+    pepper_match = PEPPER_PATTERN.search(output)
+    if verifier_match is None or pepper_match is None:
+        pytest.fail("Password helper did not emit both versioned envelopes", pytrace=False)
+    verifier = base64.urlsafe_b64decode(verifier_match.group(1) + b"=")
+    pepper = base64.urlsafe_b64decode(pepper_match.group(1) + b"=")
+    expected = hmac.new(pepper, entered_password, hashlib.sha256).digest()
+    if not hmac.compare_digest(verifier, expected):
+        pytest.fail("Password helper produced an invalid keyed verifier", pytrace=False)
     assert list(tmp_path.iterdir()) == []
 
 
-def test_session_secret_helper_outputs_one_ephemeral_value_and_writes_no_file(
+def test_session_secret_helper_outputs_one_versioned_value_and_writes_no_file(
     tmp_path: Path,
 ) -> None:
     result = subprocess.run(
@@ -99,21 +103,21 @@ def test_session_secret_helper_outputs_one_ephemeral_value_and_writes_no_file(
 
     assert result.returncode == 0
     generated = result.stdout.strip()
-    if SECRET_PATTERN.fullmatch(generated) is None or result.stderr:
-        pytest.fail("Session helper output was not a single valid secret", pytrace=False)
+    if SESSION_PATTERN.fullmatch(generated) is None or result.stderr:
+        pytest.fail("Session helper output was not one versioned secret", pytrace=False)
     assert list(tmp_path.iterdir()) == []
 
 
-def test_password_hash_helper_rejects_a_short_password_without_echo(
+def test_password_secret_helper_rejects_a_short_password_without_echo(
     tmp_path: Path,
 ) -> None:
-    entered_password = base64.urlsafe_b64encode(os.urandom(6)).rstrip(b"=")
+    entered_password = b"V" * 7
     child_pid, master_fd = pty.fork()
     if child_pid == 0:
         os.chdir(tmp_path)
         os.execv(
             sys.executable,
-            [sys.executable, str(REPO_ROOT / "scripts" / "generate-password-hash.py")],
+            [sys.executable, str(REPO_ROOT / "scripts" / "generate-password-secrets.py")],
         )
 
     output = bytearray()
@@ -129,5 +133,6 @@ def test_password_hash_helper_rejects_a_short_password_without_echo(
     assert os.waitstatus_to_exitcode(status) == 1
     if entered_password in output:
         pytest.fail("Password helper echoed credential input", pytrace=False)
-    assert HASH_PATTERN.search(output) is None
+    assert VERIFIER_PATTERN.search(output) is None
+    assert PEPPER_PATTERN.search(output) is None
     assert list(tmp_path.iterdir()) == []

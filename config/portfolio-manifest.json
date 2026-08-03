@@ -1,8 +1,8 @@
 {
-  "protectionNotice": "PROVISIONAL: Project MP and Project DM are protected because the resume labels both categories 미공개. Review this manifest before deployment.",
+  "protectionNotice": "Owner-confirmed protection list: Warhaven 12-20 and 22, Project MP 25-29, and every Project DM image. Protected originals live only under the external Mac mini media root; PDFs containing protected work are excluded from public delivery.",
   "deploymentExclusions": {
-    "directories": ["project MP", "project DM"],
-    "files": ["MP.pdf", "DM.pdf"]
+    "directories": ["project DM"],
+    "files": ["warhaven.pdf", "MP.pdf", "DM.pdf", "워헤이븐/12.jpg", "워헤이븐/13.jpg", "워헤이븐/14.jpg", "워헤이븐/15.jpg", "워헤이븐/16.jpg", "워헤이븐/17.jpg", "워헤이븐/18.jpg", "워헤이븐/19.jpg", "워헤이븐/20.jpg", "워헤이븐/22.jpg", "project MP/25.jpg", "project MP/26.jpg", "project MP/27.jpg", "project MP/28.jpg", "project MP/29.jpg"]
   },
   "projects": [
     {
@@ -59,17 +59,17 @@
         { "id": "warhaven-09", "title": "09", "type": "image", "sourcePath": "워헤이븐/09.jpg" },
         { "id": "warhaven-10", "title": "10", "type": "image", "sourcePath": "워헤이븐/10.jpg" },
         { "id": "warhaven-11", "title": "11", "type": "image", "sourcePath": "워헤이븐/11.jpg" },
-        { "id": "warhaven-12", "title": "12", "type": "image", "sourcePath": "워헤이븐/12.jpg" },
-        { "id": "warhaven-13", "title": "13", "type": "image", "sourcePath": "워헤이븐/13.jpg" },
-        { "id": "warhaven-14", "title": "14", "type": "image", "sourcePath": "워헤이븐/14.jpg" },
-        { "id": "warhaven-15", "title": "15", "type": "image", "sourcePath": "워헤이븐/15.jpg" },
-        { "id": "warhaven-16", "title": "16", "type": "image", "sourcePath": "워헤이븐/16.jpg" },
-        { "id": "warhaven-17", "title": "17", "type": "image", "sourcePath": "워헤이븐/17.jpg" },
-        { "id": "warhaven-18", "title": "18", "type": "image", "sourcePath": "워헤이븐/18.jpg" },
-        { "id": "warhaven-19", "title": "19", "type": "image", "sourcePath": "워헤이븐/19.jpg" },
-        { "id": "warhaven-20", "title": "20", "type": "image", "sourcePath": "워헤이븐/20.jpg" },
+        { "id": "warhaven-12", "title": "12", "type": "image", "protected": true, "routeId": "warhaven-012", "sourcePath": "워헤이븐/12.jpg", "sha256": "8151c9545b363f46ac1fcbc347e1e599a59c7d48bac445a36e754abf8d61a68a", "contentType": "image/jpeg" },
+        { "id": "warhaven-13", "title": "13", "type": "image", "protected": true, "routeId": "warhaven-013", "sourcePath": "워헤이븐/13.jpg", "sha256": "e6c51f6a2d756f8edf9eaf6bfc98555810328448fbf7fd28d1ebf8bde558573c", "contentType": "image/jpeg" },
+        { "id": "warhaven-14", "title": "14", "type": "image", "protected": true, "routeId": "warhaven-014", "sourcePath": "워헤이븐/14.jpg", "sha256": "5f1b2c9ff20fc1dce60b2f5c08dd5a03ec01693deb71f26f66ef1c021a14d2e7", "contentType": "image/jpeg" },
+        { "id": "warhaven-15", "title": "15", "type": "image", "protected": true, "routeId": "warhaven-015", "sourcePath": "워헤이븐/15.jpg", "sha256": "89bbccffcc11db04091f32d959bc0369e983f3fb90d1a0da8569ab0e31168b41", "contentType": "image/jpeg" },
+        { "id": "warhaven-16", "title": "16", "type": "image", "protected": true, "routeId": "warhaven-016", "sourcePath": "워헤이븐/16.jpg", "sha256": "5dd4a940475211cb6fac10c4e6992cfa421397fb12eb8c7c1cf382cf936160a2", "contentType": "image/jpeg" },
+        { "id": "warhaven-17", "title": "17", "type": "image", "protected": true, "routeId": "warhaven-017", "sourcePath": "워헤이븐/17.jpg", "sha256": "720aa14516cf23fa0f09fd8ec617f57e1b40d62a7072d014984b09d93e00d6f4", "contentType": "image/jpeg" },
+        { "id": "warhaven-18", "title": "18", "type": "image", "protected": true, "routeId": "warhaven-018", "sourcePath": "워헤이븐/18.jpg", "sha256": "5cb19a7a543c71941f73636fd574a3e72af016acb60e4a274524eef23340b6e0", "contentType": "image/jpeg" },
+        { "id": "warhaven-19", "title": "19", "type": "image", "protected": true, "routeId": "warhaven-019", "sourcePath": "워헤이븐/19.jpg", "sha256": "57b7cbc121ac41c372765b1bf7f2cef41a18c286ae44858df7162590fb6790cf", "contentType": "image/jpeg" },
+        { "id": "warhaven-20", "title": "20", "type": "image", "protected": true, "routeId": "warhaven-020", "sourcePath": "워헤이븐/20.jpg", "sha256": "7d3a4a9ab3ef180321bcf73e8a63553932402a27ff5b3e09d42f2d32e742aa33", "contentType": "image/jpeg" },
         { "id": "warhaven-21", "title": "21", "type": "image", "sourcePath": "워헤이븐/21.jpg" },
-        { "id": "warhaven-22", "title": "22", "type": "image", "sourcePath": "워헤이븐/22.jpg" },
+        { "id": "warhaven-22", "title": "22", "type": "image", "protected": true, "routeId": "warhaven-022", "sourcePath": "워헤이븐/22.jpg", "sha256": "8ad1e539983b51ca39fe2699d76621739f114b804ddfe87f4dfad5c9f67a4e3b", "contentType": "image/jpeg" },
         { "id": "warhaven-23", "title": "23", "type": "image", "sourcePath": "워헤이븐/23.jpg" }
       ]
     },
@@ -123,14 +123,14 @@
     {
       "id": "project-mp",
       "title": "Project MP",
-      "protected": true,
+      "protected": false,
       "items": [
-        { "id": "project-mp-01", "title": "Project MP · 01", "type": "image", "routeId": "mp-001", "sourcePath": "project MP/24.jpg", "r2Key": "project-mp/24.jpg", "contentType": "image/jpeg" },
-        { "id": "project-mp-02", "title": "Project MP · 02", "type": "image", "routeId": "mp-002", "sourcePath": "project MP/25.jpg", "r2Key": "project-mp/25.jpg", "contentType": "image/jpeg" },
-        { "id": "project-mp-03", "title": "Project MP · 03", "type": "image", "routeId": "mp-003", "sourcePath": "project MP/26.jpg", "r2Key": "project-mp/26.jpg", "contentType": "image/jpeg" },
-        { "id": "project-mp-04", "title": "Project MP · 04", "type": "image", "routeId": "mp-004", "sourcePath": "project MP/27.jpg", "r2Key": "project-mp/27.jpg", "contentType": "image/jpeg" },
-        { "id": "project-mp-05", "title": "Project MP · 05", "type": "image", "routeId": "mp-005", "sourcePath": "project MP/28.jpg", "r2Key": "project-mp/28.jpg", "contentType": "image/jpeg" },
-        { "id": "project-mp-06", "title": "Project MP · 06", "type": "image", "routeId": "mp-006", "sourcePath": "project MP/29.jpg", "r2Key": "project-mp/29.jpg", "contentType": "image/jpeg" }
+        { "id": "project-mp-24", "title": "Project MP · 24", "type": "image", "sourcePath": "project MP/24.jpg" },
+        { "id": "project-mp-25", "title": "Project MP · 25", "type": "image", "protected": true, "routeId": "mp-025", "sourcePath": "project MP/25.jpg", "sha256": "298e3a0e5dbebe7deab7e356fa6a0d14a819d6144e7d0aed1f76bc9421eac21d", "contentType": "image/jpeg" },
+        { "id": "project-mp-26", "title": "Project MP · 26", "type": "image", "protected": true, "routeId": "mp-026", "sourcePath": "project MP/26.jpg", "sha256": "f621d60e33818d5f48975af87d3cf8f015b44d844606dfdd114ceccf047fd43e", "contentType": "image/jpeg" },
+        { "id": "project-mp-27", "title": "Project MP · 27", "type": "image", "protected": true, "routeId": "mp-027", "sourcePath": "project MP/27.jpg", "sha256": "2361d4b85453e4ae5bafc426a0db4b3c83df0b4da3674d01e5dc17dfcf0bebda", "contentType": "image/jpeg" },
+        { "id": "project-mp-28", "title": "Project MP · 28", "type": "image", "protected": true, "routeId": "mp-028", "sourcePath": "project MP/28.jpg", "sha256": "da45252e0df1ae876b1e9558af38a989a3d3f66854a54ba2c57514cacf744841", "contentType": "image/jpeg" },
+        { "id": "project-mp-29", "title": "Project MP · 29", "type": "image", "protected": true, "routeId": "mp-029", "sourcePath": "project MP/29.jpg", "sha256": "91ab5fd3e3d713428f6ce47c554c26d76515d5bf94f11f71db39e22fe8165fe0", "contentType": "image/jpeg" }
       ]
     },
     {
@@ -138,24 +138,24 @@
       "title": "Project DM",
       "protected": true,
       "items": [
-        { "id": "project-dm-01", "title": "Project DM · 01", "type": "image", "routeId": "dm-001", "sourcePath": "project DM/sheet_arad01.jpg", "r2Key": "project-dm/sheet_arad01.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-02", "title": "Project DM · 02", "type": "image", "routeId": "dm-002", "sourcePath": "project DM/sheet_arad02.jpg", "r2Key": "project-dm/sheet_arad02.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-03", "title": "Project DM · 03", "type": "image", "routeId": "dm-003", "sourcePath": "project DM/sheet_arad03.jpg", "r2Key": "project-dm/sheet_arad03.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-04", "title": "Project DM · 04", "type": "image", "routeId": "dm-004", "sourcePath": "project DM/sheet_arad04.jpg", "r2Key": "project-dm/sheet_arad04.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-05", "title": "Project DM · 05", "type": "image", "routeId": "dm-005", "sourcePath": "project DM/sheet_arad05.jpg", "r2Key": "project-dm/sheet_arad05.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-06", "title": "Project DM · 06", "type": "image", "routeId": "dm-006", "sourcePath": "project DM/sheet_arad06.jpg", "r2Key": "project-dm/sheet_arad06.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-07", "title": "Project DM · 07", "type": "image", "routeId": "dm-007", "sourcePath": "project DM/sheet_dolomite castle.jpg", "r2Key": "project-dm/sheet_dolomite-castle.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-08", "title": "Project DM · 08", "type": "image", "routeId": "dm-008", "sourcePath": "project DM/sheet_dolomite forest2.jpg", "r2Key": "project-dm/sheet_dolomite-forest2.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-09", "title": "Project DM · 09", "type": "image", "routeId": "dm-009", "sourcePath": "project DM/sheet_gate0.jpg", "r2Key": "project-dm/sheet_gate0.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-10", "title": "Project DM · 10", "type": "image", "routeId": "dm-010", "sourcePath": "project DM/sheet_gate1.jpg", "r2Key": "project-dm/sheet_gate1.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-11", "title": "Project DM · 11", "type": "image", "routeId": "dm-011", "sourcePath": "project DM/sheet_gate2.jpg", "r2Key": "project-dm/sheet_gate2.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-12", "title": "Project DM · 12", "type": "image", "routeId": "dm-012", "sourcePath": "project DM/Sheet_ruin01.jpg", "r2Key": "project-dm/sheet-ruin01.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-13", "title": "Project DM · 13", "type": "image", "routeId": "dm-013", "sourcePath": "project DM/Sheet_ruin02.jpg", "r2Key": "project-dm/sheet-ruin02.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-14", "title": "Project DM · 14", "type": "image", "routeId": "dm-014", "sourcePath": "project DM/Sheet_ruin03.jpg", "r2Key": "project-dm/sheet-ruin03.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-15", "title": "Project DM · 15", "type": "image", "routeId": "dm-015", "sourcePath": "project DM/Sheet_ruin04.jpg", "r2Key": "project-dm/sheet-ruin04.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-16", "title": "Project DM · 16", "type": "image", "routeId": "dm-016", "sourcePath": "project DM/sheet_watch tower1.jpg", "r2Key": "project-dm/sheet-watch-tower1.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-17", "title": "Project DM · 17", "type": "image", "routeId": "dm-017", "sourcePath": "project DM/sheet_watch tower2.jpg", "r2Key": "project-dm/sheet-watch-tower2.jpg", "contentType": "image/jpeg" },
-        { "id": "project-dm-18", "title": "Project DM · 18", "type": "image", "routeId": "dm-018", "sourcePath": "project DM/Sheet_worldmap.jpg", "r2Key": "project-dm/sheet-worldmap.jpg", "contentType": "image/jpeg" }
+        { "id": "project-dm-01", "title": "Project DM · 01", "type": "image", "routeId": "dm-001", "sourcePath": "project DM/sheet_arad01.jpg", "sha256": "e435b1d203d280d14411fcf7877da2ed88413f71562115c01a9c86198528e59c", "contentType": "image/jpeg" },
+        { "id": "project-dm-02", "title": "Project DM · 02", "type": "image", "routeId": "dm-002", "sourcePath": "project DM/sheet_arad02.jpg", "sha256": "9ffa624c35ae78d6b8293d955b24196f1192b28d18cc56317ba4840d7cb21ab9", "contentType": "image/jpeg" },
+        { "id": "project-dm-03", "title": "Project DM · 03", "type": "image", "routeId": "dm-003", "sourcePath": "project DM/sheet_arad03.jpg", "sha256": "6c52ac5b1db2f7c7845d0ae923394e64d4be2c5b064b899969a7e0ec663b272e", "contentType": "image/jpeg" },
+        { "id": "project-dm-04", "title": "Project DM · 04", "type": "image", "routeId": "dm-004", "sourcePath": "project DM/sheet_arad04.jpg", "sha256": "e8ac4816e28c0531bde416ba29f10b18abb8bb90fd8a3d8f18b4958b77ccd8cc", "contentType": "image/jpeg" },
+        { "id": "project-dm-05", "title": "Project DM · 05", "type": "image", "routeId": "dm-005", "sourcePath": "project DM/sheet_arad05.jpg", "sha256": "60cdfbcd5491a5f45007b3cd8f5049e76751e285fb017ce1d148348f43bb72b0", "contentType": "image/jpeg" },
+        { "id": "project-dm-06", "title": "Project DM · 06", "type": "image", "routeId": "dm-006", "sourcePath": "project DM/sheet_arad06.jpg", "sha256": "af66e0b4e07af937a8f756360667b6afe7b588066a7c009467ce174addb236f4", "contentType": "image/jpeg" },
+        { "id": "project-dm-07", "title": "Project DM · 07", "type": "image", "routeId": "dm-007", "sourcePath": "project DM/sheet_dolomite castle.jpg", "sha256": "6c9efebf45ba0e81e5b6eb2142233aa6dc3dd7ad92e63bd66739a9ad5689a08e", "contentType": "image/jpeg" },
+        { "id": "project-dm-08", "title": "Project DM · 08", "type": "image", "routeId": "dm-008", "sourcePath": "project DM/sheet_dolomite forest2.jpg", "sha256": "24987569f5d7106d206227cdf6df0fd88dc41b1ea45db0b0ab18eca0cb96339a", "contentType": "image/jpeg" },
+        { "id": "project-dm-09", "title": "Project DM · 09", "type": "image", "routeId": "dm-009", "sourcePath": "project DM/sheet_gate0.jpg", "sha256": "4949888a2b9e0f604974e72c907c9a1f8dfe5f4c032aee665779f38762bfcaf7", "contentType": "image/jpeg" },
+        { "id": "project-dm-10", "title": "Project DM · 10", "type": "image", "routeId": "dm-010", "sourcePath": "project DM/sheet_gate1.jpg", "sha256": "8553c4c6725ddd3ff412237293ab6e849ee27f2752366d6060a5e7fc55a758e4", "contentType": "image/jpeg" },
+        { "id": "project-dm-11", "title": "Project DM · 11", "type": "image", "routeId": "dm-011", "sourcePath": "project DM/sheet_gate2.jpg", "sha256": "ebe34da6023137e8113e5b223906744933e11ebbe9fcc8740f7d7ec4007e9c2c", "contentType": "image/jpeg" },
+        { "id": "project-dm-12", "title": "Project DM · 12", "type": "image", "routeId": "dm-012", "sourcePath": "project DM/Sheet_ruin01.jpg", "sha256": "85478c43083a71ff8ef7f005aae8b93f497a0d1f5a1d660b83a7428b43a0ecb2", "contentType": "image/jpeg" },
+        { "id": "project-dm-13", "title": "Project DM · 13", "type": "image", "routeId": "dm-013", "sourcePath": "project DM/Sheet_ruin02.jpg", "sha256": "2429829795869d1adcdcd3d178c5121192261bceddc64451240f75d97b7b8afc", "contentType": "image/jpeg" },
+        { "id": "project-dm-14", "title": "Project DM · 14", "type": "image", "routeId": "dm-014", "sourcePath": "project DM/Sheet_ruin03.jpg", "sha256": "466bc9b0cb5bb7f5f45e29fdaf364b3acfe5c5df6920a82e163c222c2becf39f", "contentType": "image/jpeg" },
+        { "id": "project-dm-15", "title": "Project DM · 15", "type": "image", "routeId": "dm-015", "sourcePath": "project DM/Sheet_ruin04.jpg", "sha256": "e559dc6145ec144705f5cc625d7ca52fdbeaa787c5bcb40f6c8ecd56fb9c6855", "contentType": "image/jpeg" },
+        { "id": "project-dm-16", "title": "Project DM · 16", "type": "image", "routeId": "dm-016", "sourcePath": "project DM/sheet_watch tower1.jpg", "sha256": "53327c5dd934e33ea3753d51262b03cae1c3eebb0696cef53aa5b496ccc94f7e", "contentType": "image/jpeg" },
+        { "id": "project-dm-17", "title": "Project DM · 17", "type": "image", "routeId": "dm-017", "sourcePath": "project DM/sheet_watch tower2.jpg", "sha256": "f183dc3a916361b923c36d16984452ba066b48336e74ff6d0df7af1c5c4a7aeb", "contentType": "image/jpeg" },
+        { "id": "project-dm-18", "title": "Project DM · 18", "type": "image", "routeId": "dm-018", "sourcePath": "project DM/Sheet_worldmap.jpg", "sha256": "f61f1ba7a351192fafc25eb30f592ba6d671a972c573666f0e99c7a303442bba", "contentType": "image/jpeg" }
       ]
     }
   ]

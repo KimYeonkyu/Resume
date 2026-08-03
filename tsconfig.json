@@ -1,23 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "types": [
-      "@cloudflare/vitest-pool-workers/types",
-      "node",
-      "vitest/globals"
-    ]
+    "target": "ES2023",
+    "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "src/**/*.ts",
-    "tests/runtime/**/*.ts",
-    "tests/worker/**/*.ts",
-    "vitest.worker.config.ts",
-    "worker-configuration.d.ts"
-  ]
+  "include": ["src/**/*.ts", "tests/server/**/*.ts"]
 }

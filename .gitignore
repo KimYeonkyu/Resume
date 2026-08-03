@@ -1,7 +1,8 @@
 node_modules/
 dist/
+server-dist/
+worker-configuration.d.ts
 .wrangler/
-.dev.vars*
 .env*
 .venv/
 .pytest_cache/

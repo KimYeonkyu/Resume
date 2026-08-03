@@ -4,27 +4,14 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
+import { rootPublicFiles } from "./public-build-policy.mjs";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(repositoryRoot, "dist");
 const execFileAsync = promisify(execFile);
 const manifest = JSON.parse(
   await readFile(path.join(repositoryRoot, "config", "portfolio-manifest.json"), "utf8"),
 );
-
-const rootPublicFiles = [
-  "GOT.pdf",
-  "Jin_Kim_Resume.pdf",
-  "NYPC Ranking.jpg",
-  "NYPC ranking.pdf",
-  "dominionion.jpg",
-  "dominionion.pdf",
-  "index.html",
-  "jin_kim_portfolio.html",
-  "portfolio.css",
-  "portfolio.js",
-  "warhaven.pdf",
-  "개인작.pdf",
-];
 
 function resolveInside(base, relativePath) {
   if (
@@ -66,8 +53,8 @@ await mkdir(distDirectory, { recursive: true });
 
 const publicFiles = new Set(rootPublicFiles);
 for (const project of manifest.projects) {
-  if (project.protected) continue;
   for (const item of project.items) {
+    if (project.protected === true || item.protected === true) continue;
     publicFiles.add(item.sourcePath);
     if (item.posterPath) publicFiles.add(item.posterPath);
   }

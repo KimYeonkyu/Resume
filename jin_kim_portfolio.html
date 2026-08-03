@@ -4,9 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
+    <meta name="portfolio-interview-url" content="https://minionion.duckdns.org/jin_kim_portfolio.html?mode=interview">
     <title>JIN KIM - Environment Concept Artist Portfolio</title>
-    <link rel="stylesheet" href="/portfolio.css">
-    <script type="module" src="/portfolio.js"></script>
+    <link rel="stylesheet" href="./portfolio.css">
+    <script type="module" src="./portfolio.js"></script>
 </head>
 <body>
     <section id="entrance-screen" class="entrance" aria-labelledby="entrance-title">
@@ -26,6 +27,7 @@
                     <small>공개 작품만 둘러보기</small>
                 </button>
             </div>
+            <p id="entrance-status" class="form-message" role="alert" aria-live="assertive"></p>
 
             <form id="login-form" class="login-form" aria-label="면접용 포트폴리오 로그인" hidden>
                 <button id="login-back" class="text-button login-back" type="button">선택으로 돌아가기</button>
@@ -45,7 +47,7 @@
                 <div class="identity">
                     <div class="avatar" aria-hidden="true">JK</div>
                     <div>
-                        <p class="artist-name">Jin Kim</p>
+                        <h1 id="gallery-title" class="artist-name" tabindex="-1">Jin Kim Portfolio</h1>
                         <p class="artist-role">Environment Concept Artist</p>
                     </div>
                 </div>
@@ -74,7 +76,7 @@
         </footer>
     </div>
 
-    <div id="detail-modal" class="viewer" role="dialog" aria-modal="true" aria-label="Artwork viewer" hidden>
+    <div id="detail-modal" class="viewer" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
         <button id="modal-close-button" class="viewer-control viewer-close" type="button" aria-label="상세 이미지 닫기">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -88,7 +90,7 @@
         <div id="modal-info" class="viewer-info">
             <div>
                 <span id="modal-category" class="viewer-category"></span>
-                <h2 id="modal-title"></h2>
+                <h2 id="modal-title" aria-live="polite"></h2>
                 <p id="modal-description"></p>
             </div>
         </div>

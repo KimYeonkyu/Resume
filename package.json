@@ -1,25 +1,28 @@
 {
-  "name": "jin-kim-cloudflare-portfolio",
+  "name": "jin-kim-self-hosted-portfolio",
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "npm run build:public && npm run build:server",
+    "build:public": "npm run manifest:check && node scripts/build.mjs",
+    "build:server": "node scripts/build-server.mjs",
+    "manifest:public": "node scripts/generate-public-manifest.mjs",
+    "manifest:check": "node scripts/generate-public-manifest.mjs --check",
     "check:dist": "node scripts/check-dist.mjs",
-    "deploy": "npm run build && npm run check:dist && wrangler deploy",
-    "r2:upload": "node scripts/upload-protected-media.mjs",
-    "test:worker": "vitest run tests/worker",
-    "test:browser": "npm run build && PYTHONDONTWRITEBYTECODE=1 pytest -q -p no:cacheprovider tests/test_portfolio_access.py tests/test_portfolio_video.py",
-    "test:runtime": "npm run build && vitest run --config vitest.worker.config.ts",
-    "types": "wrangler types worker-configuration.d.ts",
-    "typecheck": "wrangler types worker-configuration.d.ts --check && tsc --noEmit"
+    "start": "NODE_ENV=production node server-dist/server.mjs",
+    "test:server": "vitest run tests/server tests/scripts/public-manifest.test.ts",
+    "test:browser": "npm run build:public && PYTHONDONTWRITEBYTECODE=1 pytest -q -p no:cacheprovider tests/test_portfolio_access.py tests/test_portfolio_video.py",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.20.1",
     "@types/node": "22.20.1",
+    "esbuild": "0.28.1",
     "tailwindcss": "3.4.17",
     "typescript": "7.0.2",
-    "vitest": "4.1.10",
-    "wrangler": "4.118.0"
+    "vitest": "4.1.10"
   }
 }

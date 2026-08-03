@@ -9,6 +9,7 @@ import threading
 from collections.abc import Iterator
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import pytest
 from playwright.sync_api import Page, Route, sync_playwright
@@ -48,6 +49,41 @@ def page() -> Iterator[Page]:
         page = browser.new_page(viewport={"width": 1280, "height": 900})
         yield page
         browser.close()
+
+
+def install_static_github_pages(page: Page) -> list[str]:
+    requests: list[str] = []
+    root = STATIC_ROOT.resolve()
+    content_types = {
+        ".css": "text/css; charset=utf-8",
+        ".html": "text/html; charset=utf-8",
+        ".js": "text/javascript; charset=utf-8",
+        ".json": "application/json; charset=utf-8",
+        ".jpg": "image/jpeg",
+        ".mp4": "video/mp4",
+        ".pdf": "application/pdf",
+    }
+
+    def route_static(route: Route) -> None:
+        requests.append(route.request.url)
+        parsed = urlsplit(route.request.url)
+        prefix = "/Resume/"
+        if not parsed.path.startswith(prefix):
+            route.fulfill(status=404, body="")
+            return
+        relative = unquote(parsed.path[len(prefix) :]) or "index.html"
+        candidate = (root / relative).resolve()
+        if not candidate.is_relative_to(root) or not candidate.is_file():
+            route.fulfill(status=404, body="")
+            return
+        route.fulfill(
+            status=200,
+            body=candidate.read_bytes(),
+            content_type=content_types.get(candidate.suffix.lower(), "application/octet-stream"),
+        )
+
+    page.route("https://kimyeonkyu.github.io/Resume/**", route_static)
+    return requests
 
 
 def guest_manifest() -> dict[str, object]:
@@ -147,7 +183,9 @@ def authenticated_manifest(protected_urls: dict[str, list[str]]) -> dict[str, ob
     return {"authenticated": True, "projects": projects}
 
 
-def install_interview_api(page: Page, configured_password: str) -> dict[str, object]:
+def install_interview_api(
+    page: Page, configured_password: str, *, logout_status: int = 204
+) -> dict[str, object]:
     session_value = secrets.token_hex(24)
     protected_urls = {
         "project-mp": [f"/protected/{secrets.token_hex(10)}" for _ in range(6)],
@@ -194,12 +232,15 @@ def install_interview_api(page: Page, configured_password: str) -> dict[str, obj
             return
         if path.endswith("/api/auth/logout"):
             calls["logout"] = int(calls["logout"]) + 1
-            route.fulfill(
-                status=204,
-                headers={
-                    "Set-Cookie": "browser_session=; Max-Age=0; Path=/; SameSite=Strict"
-                },
-            )
+            if logout_status == 204:
+                route.fulfill(
+                    status=204,
+                    headers={
+                        "Set-Cookie": "browser_session=; Max-Age=0; Path=/; SameSite=Strict"
+                    },
+                )
+            else:
+                route.fulfill(status=logout_status, json={"error": "Synthetic logout failure"})
             return
         if path.endswith("/api/projects"):
             force_public = "mode=public" in request.url
@@ -236,6 +277,46 @@ def install_interview_api(page: Page, configured_password: str) -> dict[str, obj
     return calls
 
 
+def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: Page) -> None:
+    requests = install_static_github_pages(page)
+    page.goto(
+        "https://kimyeonkyu.github.io/Resume/jin_kim_portfolio.html",
+        wait_until="domcontentloaded",
+    )
+
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    for title, locked_count in (("워헤이븐", 10), ("Project MP", 5), ("Project DM", 18)):
+        page.get_by_role("button", name=title, exact=True).click()
+        assert page.locator('#gallery-grid [data-locked="true"]').count() == locked_count
+
+    assert any("/Resume/portfolio.css" in url for url in requests)
+    assert any("/Resume/portfolio.js" in url for url in requests)
+    assert any("/Resume/public-portfolio-manifest.json" in url for url in requests)
+    assert all("/api/" not in url and "/protected/" not in url for url in requests)
+    assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
+
+
+def test_static_github_pages_interview_choice_uses_mac_mini_https(page: Page) -> None:
+    requests = install_static_github_pages(page)
+    destination = "https://minionion.duckdns.org/jin_kim_portfolio.html?mode=interview"
+    page.route(
+        "https://minionion.duckdns.org/**",
+        lambda route: route.fulfill(status=200, content_type="text/html", body="<!doctype html><title>Interview</title>"),
+    )
+    page.goto(
+        "https://kimyeonkyu.github.io/Resume/jin_kim_portfolio.html",
+        wait_until="domcontentloaded",
+    )
+
+    with page.expect_navigation(wait_until="domcontentloaded"):
+        page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
+
+    assert page.url == destination
+    assert all("/api/" not in url and "/protected/" not in url for url in requests)
+
+
 def test_entrance_offers_both_modes_and_interview_form(
     page: Page, portfolio_url: str
 ) -> None:
@@ -253,6 +334,16 @@ def test_entrance_offers_both_modes_and_interview_form(
     assert form.get_by_label("비밀번호").get_attribute("type") == "password"
 
 
+def test_interview_query_opens_login_form_on_protected_origin(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
+    form = page.get_by_role("form", name="면접용 포트폴리오 로그인")
+    form.wait_for(state="visible")
+    assert form.get_by_label("비밀번호").evaluate("element => element === document.activeElement")
+
+
 def test_guest_protected_categories_are_dark_locked_and_request_no_media(
     page: Page, portfolio_url: str
 ) -> None:
@@ -267,7 +358,11 @@ def test_guest_protected_categories_are_dark_locked_and_request_no_media(
         cards = page.locator('#gallery-grid [data-locked="true"]')
         assert cards.count() == count
         assert all(card.get_attribute("aria-disabled") == "true" for card in cards.all())
-        assert cards.first.get_by_text("잠김", exact=False).is_visible()
+        assert page.get_by_role("button", name=title, exact=True).get_attribute(
+            "aria-description"
+        ) == "잠김"
+        assert title in (cards.first.get_attribute("aria-label") or "")
+        assert cards.first.get_by_text("Interview Access Only", exact=True).is_visible()
         red, green, blue = cards.first.evaluate(
             "element => getComputedStyle(element).backgroundColor.match(/\\d+/g).slice(0, 3).map(Number)"
         )
@@ -364,6 +459,39 @@ def test_manual_relock_discards_protected_dom_and_returns_to_guest(
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
     assert protected_calls == []
+
+
+def test_failed_relock_keeps_access_visibly_active_and_offers_retry(
+    page: Page, portfolio_url: str
+) -> None:
+    configured_password = secrets.token_urlsafe(32)
+    calls = install_interview_api(page, configured_password, logout_status=503)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
+    page.get_by_label("비밀번호").fill(configured_password)
+    page.get_by_label("비밀번호").press("Enter")
+    page.locator("#gallery-shell").wait_for(state="visible")
+    page.get_by_role("button", name="Project MP", exact=True).click()
+
+    page.get_by_role("button", name="다시 잠그기", exact=True).click()
+    page.get_by_text("접근이 아직 활성화", exact=False).wait_for()
+
+    assert calls["logout"] == 1
+    assert page.locator("#gallery-shell").is_visible()
+    assert page.locator("#access-status").text_content() == "면접용 전체 보기"
+    assert page.locator('[src*="/protected/"]').count() == 6
+    assert page.get_by_text("접근이 아직 활성화", exact=False).is_visible()
+    assert page.get_by_role("button", name="다시 잠그기", exact=True).is_enabled()
+
+
+def test_gallery_entry_moves_focus_to_a_real_heading(page: Page, portfolio_url: str) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    heading = page.get_by_role("heading", name="Jin Kim Portfolio", exact=True)
+    assert heading.is_visible()
+    page.wait_for_function("document.querySelector('#gallery-title') === document.activeElement")
+    assert heading.evaluate("element => element === document.activeElement")
 
 
 def test_wrong_password_stays_locked_with_generic_error(

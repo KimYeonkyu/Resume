@@ -13,6 +13,30 @@ const state = {
 };
 
 const ACCESS_MODE_KEY = 'portfolio-access-mode';
+const STATIC_PUBLIC_HOSTNAME = 'kimyeonkyu.github.io';
+const INTERVIEW_URL = (() => {
+    const raw = document.querySelector('meta[name="portfolio-interview-url"]')?.content ?? '';
+    try {
+        const parsed = new URL(raw);
+        if (
+            parsed.protocol !== 'https:'
+            || parsed.hostname !== 'minionion.duckdns.org'
+            || parsed.port
+            || parsed.pathname !== '/jin_kim_portfolio.html'
+            || parsed.search !== '?mode=interview'
+            || parsed.hash
+            || parsed.username
+            || parsed.password
+        ) return null;
+        return parsed.href;
+    } catch {
+        return null;
+    }
+})();
+
+function isStaticPublicSite() {
+    return window.location.hostname === STATIC_PUBLIC_HOSTNAME;
+}
 
 const elements = {
     entrance: document.querySelector('#entrance-screen'),
@@ -23,7 +47,9 @@ const elements = {
     loginBack: document.querySelector('#login-back'),
     passwordInput: document.querySelector('#password-input'),
     loginError: document.querySelector('#login-error'),
+    entranceStatus: document.querySelector('#entrance-status'),
     galleryShell: document.querySelector('#gallery-shell'),
+    galleryTitle: document.querySelector('#gallery-title'),
     categoryTabs: document.querySelector('#category-tabs'),
     artworkCount: document.querySelector('#artwork-count'),
     galleryGrid: document.querySelector('#gallery-grid'),
@@ -73,6 +99,7 @@ function showLoginForm() {
     elements.entranceActions.hidden = true;
     elements.loginForm.hidden = false;
     elements.loginError.textContent = '';
+    elements.entranceStatus.textContent = '';
     requestAnimationFrame(() => elements.passwordInput.focus());
 }
 
@@ -89,23 +116,41 @@ async function enterPublicPortfolio() {
     const generation = beginAccessFlow();
     sessionStorage.setItem(ACCESS_MODE_KEY, 'public');
     elements.publicChoice.disabled = true;
+    elements.entranceStatus.textContent = '';
     try {
-        const logoutResponse = await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { Accept: 'application/json' },
-        });
-        if (!logoutResponse.ok) throw new Error('Guest session reset failed');
-        if (!isCurrentAccessFlow(generation)) return;
-        const manifest = await requestJson('/api/projects?mode=public');
+        let manifest;
+        if (isStaticPublicSite()) {
+            manifest = await requestJson('./public-portfolio-manifest.json');
+        } else {
+            const logoutResponse = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json' },
+            });
+            if (!logoutResponse.ok) throw new Error('Guest session reset failed');
+            if (!isCurrentAccessFlow(generation)) return;
+            manifest = await requestJson('/api/projects?mode=public');
+        }
         if (!isCurrentAccessFlow(generation)) return;
         showGallery(manifest);
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
-        elements.loginError.textContent = '포트폴리오를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+        elements.entranceStatus.textContent = '포트폴리오를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
     } finally {
         elements.publicChoice.disabled = false;
     }
+}
+
+function enterInterviewPortfolio() {
+    if (isStaticPublicSite()) {
+        if (!INTERVIEW_URL) {
+            elements.entranceStatus.textContent = '면접용 포트폴리오 주소를 확인할 수 없습니다.';
+            return;
+        }
+        window.location.assign(INTERVIEW_URL);
+        return;
+    }
+    showLoginForm();
 }
 
 function showGallery(manifest) {
@@ -117,8 +162,10 @@ function showGallery(manifest) {
     elements.relockButton.hidden = !manifest.authenticated;
     elements.passwordInput.value = '';
     elements.loginError.textContent = '';
+    elements.entranceStatus.textContent = '';
     renderTabs();
     renderGallery();
+    requestAnimationFrame(() => elements.galleryTitle.focus());
 }
 
 async function submitLogin(event) {
@@ -129,6 +176,7 @@ async function submitLogin(event) {
     elements.passwordInput.value = '';
     elements.loginError.textContent = '';
     submitButton.disabled = true;
+    elements.loginBack.disabled = true;
 
     try {
         const response = await fetch('/api/auth/login', {
@@ -153,18 +201,17 @@ async function submitLogin(event) {
         requestAnimationFrame(() => elements.passwordInput.focus());
     } finally {
         submitButton.disabled = false;
+        elements.loginBack.disabled = false;
     }
 }
 
 async function relockPortfolio() {
     const generation = beginAccessFlow();
-    sessionStorage.setItem(ACCESS_MODE_KEY, 'public');
+    let sessionCleared = false;
     elements.relockButton.disabled = true;
     closeViewer();
-    state.projects = [];
-    state.currentProjectId = null;
-    elements.galleryGrid.replaceChildren();
-    elements.categoryTabs.replaceChildren();
+    elements.galleryError.hidden = true;
+    elements.galleryError.textContent = '';
     try {
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
@@ -173,15 +220,26 @@ async function relockPortfolio() {
         });
         if (!response.ok) throw new Error('Logout failed');
         if (!isCurrentAccessFlow(generation)) return;
+        sessionCleared = true;
+        sessionStorage.setItem(ACCESS_MODE_KEY, 'public');
         const manifest = await requestJson('/api/projects?mode=public');
         if (!isCurrentAccessFlow(generation)) return;
         showGallery(manifest);
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
-        elements.galleryShell.hidden = true;
-        elements.entrance.hidden = false;
-        showEntranceChoices();
-        elements.loginError.textContent = '다시 잠그지 못했습니다. 페이지를 새로고침해 주세요.';
+        if (sessionCleared) {
+            state.projects = [];
+            state.currentProjectId = null;
+            elements.galleryGrid.replaceChildren();
+            elements.categoryTabs.replaceChildren();
+            elements.galleryShell.hidden = true;
+            elements.entrance.hidden = false;
+            showEntranceChoices();
+            elements.entranceStatus.textContent = '보호 콘텐츠는 잠겼지만 공개 포트폴리오를 불러오지 못했습니다. 다시 시도해 주세요.';
+        } else {
+            elements.galleryError.textContent = '다시 잠그지 못해 보호 콘텐츠 접근이 아직 활성화되어 있습니다. 다시 시도해 주세요.';
+            elements.galleryError.hidden = false;
+        }
     } finally {
         elements.relockButton.disabled = false;
     }
@@ -190,6 +248,11 @@ async function relockPortfolio() {
 async function restoreSession() {
     const generation = state.accessFlowGeneration;
     const preferredMode = sessionStorage.getItem(ACCESS_MODE_KEY);
+    const requestedMode = new URLSearchParams(window.location.search).get('mode');
+    if (isStaticPublicSite()) {
+        if (preferredMode === 'public' || requestedMode === 'public') await enterPublicPortfolio();
+        return;
+    }
     try {
         const session = await requestJson('/api/auth/session');
         if (!isCurrentAccessFlow(generation)) return;
@@ -202,10 +265,15 @@ async function restoreSession() {
                 return;
             }
         }
-        if (preferredMode === 'public') await enterPublicPortfolio();
+        if (preferredMode === 'public' || requestedMode === 'public') {
+            await enterPublicPortfolio();
+        } else if (requestedMode === 'interview') {
+            showLoginForm();
+        }
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
         sessionStorage.removeItem(ACCESS_MODE_KEY);
+        if (requestedMode === 'interview') showLoginForm();
     }
 }
 
@@ -218,10 +286,11 @@ function renderTabs() {
         button.textContent = project.title;
         button.setAttribute('aria-pressed', String(project.id === state.currentProjectId));
         if (project.locked) {
+            button.setAttribute('aria-description', '잠김');
             const lock = document.createElement('span');
             lock.className = 'tab-lock';
             lock.setAttribute('aria-hidden', 'true');
-            lock.textContent = '●';
+            lock.textContent = '🔒';
             button.append(lock);
         }
         button.addEventListener('click', () => {
@@ -233,12 +302,12 @@ function renderTabs() {
     }
 }
 
-function makeLockedCard(item) {
+function makeLockedCard(item, projectTitle, index) {
     const card = document.createElement('article');
     card.className = 'locked-card';
     card.dataset.locked = 'true';
     card.setAttribute('aria-disabled', 'true');
-    card.setAttribute('aria-label', item.title);
+    card.setAttribute('aria-label', `${projectTitle} 비공개 작품 ${index + 1}, 잠김`);
 
     const art = document.createElement('div');
     art.className = 'locked-art';
@@ -246,9 +315,9 @@ function makeLockedCard(item) {
     const mark = document.createElement('span');
     mark.className = 'lock-mark';
     mark.setAttribute('aria-hidden', 'true');
-    mark.textContent = '▣';
+    mark.textContent = '🔒';
     const title = document.createElement('strong');
-    title.textContent = '잠김';
+    title.textContent = 'Interview Access Only';
     const description = document.createElement('small');
     description.textContent = '면접용 인증 후 열람 가능';
     copy.append(mark, title, description);
@@ -294,7 +363,9 @@ function renderGallery() {
     elements.artworkCount.textContent = String(project?.itemCount ?? 0);
     if (!project) return;
     project.items.forEach((item, index) => {
-        elements.galleryGrid.append(item.locked ? makeLockedCard(item) : makeArtworkCard(item, index));
+        elements.galleryGrid.append(
+            item.locked ? makeLockedCard(item, project.title, index) : makeArtworkCard(item, index),
+        );
     });
 }
 
@@ -424,7 +495,7 @@ function closeContact() {
     state.contactLastFocusedElement?.focus();
 }
 
-elements.interviewChoice.addEventListener('click', showLoginForm);
+elements.interviewChoice.addEventListener('click', enterInterviewPortfolio);
 elements.publicChoice.addEventListener('click', enterPublicPortfolio);
 elements.loginBack.addEventListener('click', showEntranceChoices);
 elements.loginForm.addEventListener('submit', submitLogin);

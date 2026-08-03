@@ -61,29 +61,21 @@ def asset_url(source_path: str) -> str:
 def public_manifest() -> dict[str, object]:
     projects: list[dict[str, object]] = []
     for project in CONFIGURATION["projects"]:
-        if project["protected"]:
-            projects.append(
-                {
-                    "id": project["id"],
-                    "title": project["title"],
-                    "protected": True,
-                    "locked": True,
-                    "itemCount": len(project["items"]),
-                    "items": [
-                        {
-                            "id": f"locked-{project['id']}-{index}",
-                            "title": "비공개 작품",
-                            "type": "locked",
-                            "locked": True,
-                        }
-                        for index in range(1, len(project["items"]) + 1)
-                    ],
-                }
-            )
-            continue
-
         items = []
-        for item in project["items"]:
+        has_protected_items = False
+        for index, item in enumerate(project["items"], start=1):
+            is_protected = bool(project["protected"] or item.get("protected", False))
+            if is_protected:
+                has_protected_items = True
+                items.append(
+                    {
+                        "id": f"locked-{project['id']}-{index}",
+                        "title": "비공개 작품",
+                        "type": "locked",
+                        "locked": True,
+                    }
+                )
+                continue
             display_item = {
                 "id": item["id"],
                 "title": item["title"],
@@ -101,8 +93,8 @@ def public_manifest() -> dict[str, object]:
             {
                 "id": project["id"],
                 "title": project["title"],
-                "protected": False,
-                "locked": False,
+                "protected": has_protected_items,
+                "locked": has_protected_items,
                 "itemCount": len(items),
                 "items": items,
             }
@@ -178,6 +170,9 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     assert thumbnail.evaluate("video => new URL(video.poster).pathname") == POSTER_PATH
     assert thumbnail.get_attribute("preload") == "none"
     assert thumbnail.evaluate("video => video.muted && video.playsInline")
+    frame_box = cards.first.locator(".artwork-frame").bounding_box()
+    assert frame_box is not None
+    assert frame_box["width"] / frame_box["height"] == pytest.approx(1.6, abs=0.03)
 
     cards.first.click()
     modal = page.locator("#detail-modal")
@@ -206,11 +201,15 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
 
 @pytest.mark.parametrize(
-    ("category", "expected_count"),
-    [("개인작", 16), ("워헤이븐", 23), ("왕좌의게임", 40)],
+    ("category", "expected_image_count", "expected_locked_count"),
+    [("개인작", 16, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
-    page: Page, portfolio_url: str, category: str, expected_count: int
+    page: Page,
+    portfolio_url: str,
+    category: str,
+    expected_image_count: int,
+    expected_locked_count: int,
 ) -> None:
     failed_responses: list[tuple[int, str]] = []
     origin = portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]
@@ -224,13 +223,18 @@ def test_existing_public_image_categories_still_load(
     enter_public(page, portfolio_url)
     page.get_by_role("button", name=category, exact=True).click()
     images = page.locator("#gallery-grid img")
-    assert images.count() == expected_count
+    locked_cards = page.locator('#gallery-grid [data-locked="true"]')
+    assert images.count() == expected_image_count
+    assert locked_cards.count() == expected_locked_count
     images.evaluate_all("nodes => nodes.forEach(image => image.loading = 'eager')")
     page.wait_for_function(
         "() => [...document.querySelectorAll('#gallery-grid img')].every(image => image.complete)",
         timeout=60_000,
     )
     assert images.evaluate_all("nodes => nodes.every(image => image.naturalWidth > 0)")
+    frame_box = page.locator("#gallery-grid .artwork-frame").first.bounding_box()
+    assert frame_box is not None
+    assert frame_box["width"] / frame_box["height"] == pytest.approx(1.6, abs=0.03)
     assert failed_responses == []
 
 
@@ -244,6 +248,7 @@ def test_viewer_keyboard_swipe_focus_trap_and_focus_restore(
 
     modal = page.locator("#detail-modal")
     assert modal.is_visible()
+    assert modal.get_attribute("aria-labelledby") == "modal-title"
     assert page.locator("#modal-close-button").evaluate("element => element === document.activeElement")
     assert page.locator("#modal-title").text_content() == "1"
 
