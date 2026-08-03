@@ -166,6 +166,7 @@ def test_ci_deploys_only_the_verified_dist_artifact_to_github_pages() -> None:
     assert "actions/upload-pages-artifact@v3" in workflow
     assert "path: dist" in workflow
     assert "actions/deploy-pages@v4" in workflow
+    assert "pages: read" in workflow
     assert "pages: write" in workflow
     assert "id-token: write" in workflow
     assert 'build_type=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type)' in workflow
