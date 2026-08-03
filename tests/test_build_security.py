@@ -144,6 +144,15 @@ def test_resume_stylesheet_url_is_relative_to_the_pages_project_path() -> None:
     assert 'href="/resume.css"' not in published
 
 
+def test_resume_portfolio_button_links_to_the_protected_origin() -> None:
+    source = (REPO_ROOT / "index.html").read_text(encoding="utf-8")
+    assert (
+        'href="https://minionion.duckdns.org/jin_kim_portfolio.html"'
+        in source
+    )
+    assert 'href="https://jinkimdrawing.wixsite.com/concept"' not in source
+
+
 def test_self_hosted_runtime_has_no_cloudflare_deployment_path() -> None:
     for removed_path in (
         "wrangler.jsonc",
