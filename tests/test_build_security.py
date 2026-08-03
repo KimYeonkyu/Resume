@@ -132,6 +132,18 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
     assert check.returncode == 0, check.stderr
 
 
+def test_resume_stylesheet_url_is_relative_to_the_pages_project_path() -> None:
+    source = (REPO_ROOT / "index.html").read_text(encoding="utf-8")
+    assert 'href="./resume.css"' in source
+    assert 'href="/resume.css"' not in source
+
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    published = (DIST / "index.html").read_text(encoding="utf-8")
+    assert 'href="./resume.css"' in published
+    assert 'href="/resume.css"' not in published
+
+
 def test_self_hosted_runtime_has_no_cloudflare_deployment_path() -> None:
     for removed_path in (
         "wrangler.jsonc",
