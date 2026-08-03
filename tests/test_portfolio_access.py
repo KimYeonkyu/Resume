@@ -12,7 +12,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 import pytest
-from playwright.sync_api import Page, Route, sync_playwright
+from playwright.sync_api import Page, Route, expect, sync_playwright
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -341,7 +341,7 @@ def test_interview_query_opens_login_form_on_protected_origin(
     page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     form = page.get_by_role("form", name="면접용 포트폴리오 로그인")
     form.wait_for(state="visible")
-    assert form.get_by_label("비밀번호").evaluate("element => element === document.activeElement")
+    expect(form.get_by_label("비밀번호")).to_be_focused()
 
 
 def test_guest_protected_categories_are_dark_locked_and_request_no_media(
