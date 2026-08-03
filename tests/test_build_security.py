@@ -153,6 +153,21 @@ def test_resume_portfolio_button_links_to_the_protected_origin() -> None:
     assert 'href="https://jinkimdrawing.wixsite.com/concept"' not in source
 
 
+def test_resume_nypc_result_link_opens_the_attached_public_pdf() -> None:
+    expected_digest = "a2aa4c70ab62756bc0c1bb544d5c5561552fe3e21e99baca32d3fee3afa308cb"
+    source = (REPO_ROOT / "index.html").read_text(encoding="utf-8")
+    assert 'href="./NYPC%20ranking.pdf"' in source
+    assert "nypc-static.s3.ap-northeast-2.amazonaws.com" not in source
+
+    source_pdf = REPO_ROOT / "NYPC ranking.pdf"
+    assert hashlib.sha256(source_pdf.read_bytes()).hexdigest() == expected_digest
+
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    published_pdf = DIST / "NYPC ranking.pdf"
+    assert hashlib.sha256(published_pdf.read_bytes()).hexdigest() == expected_digest
+
+
 def test_self_hosted_runtime_has_no_cloudflare_deployment_path() -> None:
     for removed_path in (
         "wrangler.jsonc",
