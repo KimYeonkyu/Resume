@@ -30,6 +30,7 @@
         { "id": "personal-13", "title": "13", "type": "image", "sourcePath": "개인작/13.jpg" },
         { "id": "personal-14", "title": "14", "type": "image", "sourcePath": "개인작/14.jpg" },
         { "id": "personal-15", "title": "15", "type": "image", "sourcePath": "개인작/15.jpg" },
+        { "id": "personal-15-1", "title": "15-1", "type": "image", "sourcePath": "개인작/15-1.jpg" },
         { "id": "personal-16", "title": "16", "type": "image", "sourcePath": "개인작/16.jpg" }
       ]
     },
