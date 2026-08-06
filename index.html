@@ -4,78 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>김연규 (JIN KIM) - 이력서</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
-            color: #1f2937; /* Tailwind gray-800 */
-        }
-        
-        .section-title {
-            position: relative;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-            color: #111827; /* Tailwind gray-900 */
-        }
-        
-        .section-title::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 3rem;
-            height: 0.25rem;
-            background-color: #3b82f6; /* Tailwind blue-500 */
-            border-radius: 0.125rem;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-left: 1.5rem;
-            border-left: 2px solid #e5e7eb; /* Tailwind gray-200 */
-            padding-bottom: 2rem;
-        }
-
-        .timeline-item:last-child {
-            padding-bottom: 0;
-            border-left: 2px solid transparent; /* Hide border for last item */
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -0.4rem;
-            top: 0.25rem;
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 50%;
-            background-color: #3b82f6; /* Tailwind blue-500 */
-            border: 2px solid white;
-        }
-
-        @media print {
-            body { 
-                background-color: white !important; 
-                -webkit-print-color-adjust: exact !important; /* 배경색상 출력 강제 */
-                print-color-adjust: exact !important;
-            }
-            .max-w-4xl { 
-                box-shadow: none !important; 
-                margin: 0 !important; 
-                max-width: 100% !important;
-            }
-            section, .timeline-item { 
-                page-break-inside: avoid; /* 내용이 페이지 중간에 잘리지 않도록 방지 */
-            }
-            header {
-                padding-top: 2rem !important;
-                padding-bottom: 2rem !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./resume.css">
 </head>
 <body class="antialiased selection:bg-blue-200 selection:text-blue-900">
 
@@ -83,7 +12,7 @@
     
     <!-- Header / Banner -->
     <header class="bg-gray-900 text-white relative">
-        <div class="absolute inset-0 z-0 opacity-30 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x400/111827/ffffff?text=Environment+Concept+Art');"></div>
+        <div class="absolute inset-0 z-0 bg-gradient-to-br from-slate-800 via-gray-900 to-blue-950" aria-hidden="true"></div>
         
         <div class="relative z-10 px-8 py-16 md:px-12 md:py-20 flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm bg-gray-900/50">
             <div class="text-center md:text-left">
@@ -94,10 +23,10 @@
             <!-- Contact Info -->
             <div class="flex flex-col gap-3 text-sm md:text-base text-gray-300 items-center md:items-end">
                 <a href="mailto:jinkimoffice@gmail.com" class="flex items-center gap-2 hover:text-white transition-colors">
-                    <i class="fas fa-envelope"></i> jinkimoffice@gmail.com
+                    <span aria-hidden="true">✉</span> jinkimoffice@gmail.com
                 </a>
                 <div class="flex items-center gap-2">
-                    <i class="fas fa-phone"></i> 010-9181-0670
+                    <span aria-hidden="true">☎</span> 010-9181-0670
                 </div>
             </div>
         </div>
@@ -113,8 +42,8 @@
                 자연과 건축물을 관찰하는 것을 좋아하며, 이를 세계관에 적합하게 재해석하여 게임에 녹여내는 것을 목표로 하고 있습니다. 또한 게임이 유저에게 주고자 하는 감정에 부합하는 아트작업을 만들 수 있기를 희망합니다.
             </p>
             <div class="mt-6">
-                <a href="https://jinkimdrawing.wixsite.com/concept" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold px-6 py-3 rounded-lg transition-all">
-                    <i class="fas fa-globe"></i> 포트폴리오 웹사이트
+                <a href="https://minionion.duckdns.org/jin_kim_portfolio.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold px-6 py-3 rounded-lg transition-all">
+                    <span aria-hidden="true">↗</span> 포트폴리오 웹사이트
                 </a>
             </div>
         </section>
@@ -140,8 +69,8 @@
                                 <li>참여 임직원 중 20위 기록</li>
                                 <li>기술적 도구(AI 등)를 아트 제작 프로세스에 유연하게 접목하고 실험하는 능동적인 태도 입증</li>
                                 <li class="mt-2">
-                                    <a href="https://nypc-static.s3.ap-northeast-2.amazonaws.com/2026/cleaning-internal-result/index.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 hover:text-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
-                                        <i class="fas fa-external-link-alt text-indigo-500 text-sm group-hover/link:scale-110 transition-transform"></i> 결과 확인 링크 : 유저사번 34969
+                                    <a href="./NYPC%20ranking.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 hover:text-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
+                                        <span class="text-indigo-500 text-sm group-hover/link:scale-110 transition-transform" aria-hidden="true">↗</span> 결과 확인 링크 : 유저사번 34969
                                     </a>
                                 </li>
                             </ul>
@@ -168,10 +97,10 @@
                     </ul>
                     <div class="mt-4 flex gap-3 flex-wrap">
                         <a href="https://www.youtube.com/watch?v=1dLGUo0q90Y" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
-                            <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 조선 구미호
+                            <span class="text-red-500 text-lg group-hover/link:scale-110 transition-transform" aria-hidden="true">▶</span> 조선 구미호
                         </a>
                         <a href="https://www.youtube.com/watch?v=nFLtV0chm-c" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm group/link">
-                            <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 밍글플래닛
+                            <span class="text-red-500 text-lg group-hover/link:scale-110 transition-transform" aria-hidden="true">▶</span> 밍글플래닛
                         </a>
                     </div>
                 </div>
@@ -192,7 +121,7 @@
                 </ul>
                 <div class="mt-4">
                     <a href="https://www.youtube.com/watch?v=ius-0d8QlMc" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm w-fit group/link">
-                        <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 워헤이븐 트레일러
+                        <span class="text-red-500 text-lg group-hover/link:scale-110 transition-transform" aria-hidden="true">▶</span> 워헤이븐 트레일러
                     </a>
                 </div>
             </div>
@@ -218,7 +147,7 @@
             </ul>
             <div class="mt-4">
                 <a href="https://www.youtube.com/watch?v=-BfavVhJvFw" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-700 px-4 py-1.5 rounded-full transition-all shadow-sm w-fit group/link">
-                    <i class="fab fa-youtube text-red-500 text-lg group-hover/link:scale-110 transition-transform"></i> 왕좌의 게임: 킹스로드 트레일러
+                    <span class="text-red-500 text-lg group-hover/link:scale-110 transition-transform" aria-hidden="true">▶</span> 왕좌의 게임: 킹스로드 트레일러
                 </a>
             </div>
         </div>
@@ -326,7 +255,7 @@
                     <div class="block group bg-gray-50 rounded-lg p-4 hover:bg-indigo-50 hover:shadow-md transition-all border border-gray-100">
                         <div class="flex items-start gap-3">
                             <div class="bg-indigo-100 text-indigo-600 p-2 rounded-lg mt-1 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span aria-hidden="true">▣</span>
                             </div>
                             <div>
                                 <h3 class="text-gray-900 font-bold group-hover:text-indigo-700 transition-colors">청강문화산업대학교 특강 진행</h3>
@@ -339,7 +268,7 @@
                     <a href="https://magazine.artstation.com/2022/02/environment-design-interview-untamed-challenge/" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-blue-50 hover:shadow-md transition-all border border-gray-100">
                         <div class="flex items-start gap-3">
                             <div class="bg-blue-100 text-blue-600 p-2 rounded-lg mt-1 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <i class="fas fa-trophy"></i>
+                                <span aria-hidden="true">★</span>
                             </div>
                             <div>
                                 <h3 class="text-gray-900 font-bold group-hover:text-blue-700 transition-colors">아트스테이션 배경부문 공모전 입상 인터뷰</h3>
@@ -351,7 +280,7 @@
                     <a href="https://www.youtube.com/watch?v=v1Jm5e_Bx_8" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-red-50 hover:shadow-md transition-all border border-gray-100">
                         <div class="flex items-start gap-3">
                             <div class="bg-red-100 text-red-600 p-2 rounded-lg mt-1 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                <i class="fab fa-youtube"></i>
+                                <span aria-hidden="true">▶</span>
                             </div>
                             <div>
                                 <h3 class="text-gray-900 font-bold group-hover:text-red-700 transition-colors">3D coat 프로모션 광고</h3>
@@ -363,7 +292,7 @@
                     <a href="https://www.youtube.com/watch?v=q5eh4xtxztk" target="_blank" rel="noopener noreferrer" class="block group bg-gray-50 rounded-lg p-4 hover:bg-red-50 hover:shadow-md transition-all border border-gray-100">
                         <div class="flex items-start gap-3">
                             <div class="bg-red-100 text-red-600 p-2 rounded-lg mt-1 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                <i class="fab fa-youtube"></i>
+                                <span aria-hidden="true">▶</span>
                             </div>
                             <div>
                                 <h3 class="text-gray-900 font-bold group-hover:text-red-700 transition-colors">3D를 이용한 컨셉 아티스트 인터뷰</h3>

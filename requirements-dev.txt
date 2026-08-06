@@ -1,0 +1,3 @@
+# Requires Python 3.10 or newer.
+playwright==1.62.0
+pytest==9.0.2
