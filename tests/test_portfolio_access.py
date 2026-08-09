@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import functools
+import hashlib
 import hmac
 import json
 import secrets
@@ -279,6 +280,16 @@ def install_interview_api(
 
 def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: Page) -> None:
     requests = install_static_github_pages(page)
+    page.add_init_script(
+        """
+        const nativeFetch = window.fetch.bind(window);
+        window.__portfolioFetchCalls = [];
+        window.fetch = (input, options = {}) => {
+            window.__portfolioFetchCalls.push({ url: String(input), cache: options.cache ?? null });
+            return nativeFetch(input, options);
+        };
+        """
+    )
     page.goto(
         "https://kimyeonkyu.github.io/Resume/jin_kim_portfolio.html",
         wait_until="domcontentloaded",
@@ -291,9 +302,27 @@ def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: 
         page.get_by_role("button", name=title, exact=True).click()
         assert page.locator('#gallery-grid [data-locked="true"]').count() == locked_count
 
+    page.get_by_role("button", name="개인작", exact=True).click()
+    personal_16 = urlsplit(
+        page.locator("#gallery-grid img").nth(15).evaluate("image => image.src")
+    )
+    assert unquote(personal_16.path) == "/Resume/개인작/16.jpg"
+    assert personal_16.query == (
+        "v=" + hashlib.sha256((REPO_ROOT / "개인작" / "16.jpg").read_bytes()).hexdigest()
+    )
+
     assert any("/Resume/portfolio.css" in url for url in requests)
     assert any("/Resume/portfolio.js" in url for url in requests)
     assert any("/Resume/public-portfolio-manifest.json" in url for url in requests)
+    manifest_fetch = page.evaluate(
+        """() => window.__portfolioFetchCalls.find(
+            call => call.url === './public-portfolio-manifest.json'
+        )"""
+    )
+    assert manifest_fetch == {
+        "url": "./public-portfolio-manifest.json",
+        "cache": "no-store",
+    }
     assert all("/api/" not in url and "/protected/" not in url for url in requests)
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
 

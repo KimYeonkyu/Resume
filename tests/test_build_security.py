@@ -74,7 +74,7 @@ def natural_filename_key(path: Path) -> tuple[tuple[int, int | str], ...]:
     )
 
 
-def test_personal_manifest_matches_repository_image_inventory_in_natural_order() -> None:
+def test_personal_manifest_matches_repository_image_identity_and_natural_order() -> None:
     personal = next(project for project in CONFIGURATION["projects"] if project["id"] == "personal")
     declared = [item["sourcePath"] for item in personal["items"]]
     actual = [
@@ -87,6 +87,10 @@ def test_personal_manifest_matches_repository_image_inventory_in_natural_order()
     ]
 
     assert declared == actual
+    for item, source_path in zip(personal["items"], actual, strict=True):
+        source_stem = Path(source_path).stem
+        assert item["title"] == source_stem
+        assert item["id"] == f"personal-{int(source_stem):02d}"
 
 
 def combined_public_text() -> str:
@@ -208,7 +212,10 @@ def test_self_hosted_runtime_has_no_cloudflare_deployment_path() -> None:
     for removed_script in ("deploy", "r2:upload", "test:worker", "test:runtime"):
         assert removed_script not in scripts
     assert scripts["start"] == "NODE_ENV=production node server-dist/server.mjs"
-    assert scripts["build:server"] == "node scripts/build-server.mjs"
+    assert (
+        scripts["build:server"]
+        == "npm run manifest:check && node scripts/build-server.mjs"
+    )
 
     combined = "\n".join(
         path.read_text(encoding="utf-8")
@@ -278,6 +285,81 @@ def test_password_verification_is_versioned_keyed_and_constant_time() -> None:
     assert "PORTFOLIO_PASSWORD_DIGEST" not in security_source
 
 
+def test_standalone_server_build_rejects_stale_media_versions_before_bundle(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repository"
+    scripts_directory = fixture / "scripts"
+    (fixture / "config").mkdir(parents=True)
+    (fixture / "media").mkdir()
+    scripts_directory.mkdir()
+
+    source_package = json.loads((REPO_ROOT / "package.json").read_text(encoding="utf-8"))
+    package = {
+        "name": "public-media-build-server-regression",
+        "version": "1.0.0",
+        "private": True,
+        "type": "module",
+        "scripts": {
+            "build:server": source_package["scripts"]["build:server"],
+            "manifest:check": source_package["scripts"]["manifest:check"],
+        },
+    }
+    (fixture / "package.json").write_text(json.dumps(package), encoding="utf-8")
+    for script_name in ("generate-public-manifest.mjs", "public-manifest.mjs"):
+        (scripts_directory / script_name).write_bytes(
+            (REPO_ROOT / "scripts" / script_name).read_bytes()
+        )
+    (scripts_directory / "build-server.mjs").write_text(
+        """import { mkdir, writeFile } from \"node:fs/promises\";
+await mkdir(new URL(\"../server-dist/\", import.meta.url), { recursive: true });
+await writeFile(new URL(\"../server-dist/server.mjs\", import.meta.url), \"untrusted bundle\\n\");
+""",
+        encoding="utf-8",
+    )
+
+    source_path = "media/asset.jpg"
+    (fixture / source_path).write_bytes(b"current public bytes")
+    (fixture / "config" / "portfolio-manifest.json").write_text(
+        json.dumps(
+            {
+                "projects": [
+                    {
+                        "id": "synthetic",
+                        "title": "Synthetic",
+                        "protected": False,
+                        "items": [
+                            {
+                                "id": "public",
+                                "title": "Public",
+                                "type": "image",
+                                "sourcePath": source_path,
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (fixture / "public-media-versions.json").write_text(
+        json.dumps({source_path: "0" * 64}) + "\n",
+        encoding="utf-8",
+    )
+
+    build = subprocess.run(
+        ["npm", "run", "build:server"],
+        cwd=fixture,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert build.returncode != 0
+    assert "public-media-versions.json is stale" in build.stderr
+    assert not (fixture / "server-dist" / "server.mjs").exists()
+
+
 def test_server_bundle_builds_without_embedding_runtime_secret_values() -> None:
     sentinels = {
         "PORTFOLIO_PASSWORD_VERIFIER": "hmac-sha256-v1$BUILD_SENTINEL_VERIFIER",
@@ -310,6 +392,59 @@ def test_every_excluded_protected_pdf_has_its_historical_byte_hash_pinned() -> N
     exclusions = CONFIGURATION["deploymentExclusions"]
     assert exclusions["protectedFileHashes"] == expected
     assert {path for path in exclusions["files"] if path.lower().endswith(".pdf")} == set(expected)
+
+
+def test_dist_checker_rejects_missing_public_media_version_key() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    versions_path = REPO_ROOT / "public-media-versions.json"
+    original = versions_path.read_bytes()
+    modified = json.loads(original)
+    modified.pop(sorted(modified)[0])
+    try:
+        versions_path.write_text(
+            json.dumps(modified, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "do not match configured public assets" in check.stderr
+    finally:
+        versions_path.write_bytes(original)
+
+
+def test_dist_checker_rejects_extra_public_media_version_key() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    versions_path = REPO_ROOT / "public-media-versions.json"
+    original = versions_path.read_bytes()
+    modified = json.loads(original)
+    modified["media/unconfigured-extra.jpg"] = "0" * 64
+    try:
+        versions_path.write_text(
+            json.dumps(modified, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "do not match configured public assets" in check.stderr
+    finally:
+        versions_path.write_bytes(original)
+
+
+def test_dist_checker_rejects_public_media_byte_mutation_at_valid_path() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    source_path = sorted(public_asset_paths())[0]
+    output_file = DIST / source_path
+    original = output_file.read_bytes()
+    output_file.write_bytes(original + b"\npublic-byte-mutation-regression\n")
+    try:
+        check = run_npm("check:dist")
+        assert check.returncode != 0
+        assert "generated SHA-256 version" in check.stderr
+    finally:
+        output_file.write_bytes(original)
 
 
 def test_dist_checker_rejects_an_excluded_protected_filename_reference() -> None:

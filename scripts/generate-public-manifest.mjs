@@ -1,28 +1,45 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { serializePublicPortfolioManifest } from "./public-manifest.mjs";
+import {
+  createPublicMediaVersions,
+  serializePublicMediaVersions,
+  serializePublicPortfolioManifest,
+  verifyGeneratedArtifact,
+  writeGeneratedArtifacts,
+} from "./public-manifest.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const configuration = JSON.parse(
   await readFile(path.join(repositoryRoot, "config", "portfolio-manifest.json"), "utf8"),
 );
-const outputPath = path.join(repositoryRoot, "public-portfolio-manifest.json");
-const expected = serializePublicPortfolioManifest(configuration);
+const mediaVersions = await createPublicMediaVersions(configuration, repositoryRoot);
+const artifacts = [
+  {
+    relativePath: "public-media-versions.json",
+    content: serializePublicMediaVersions(mediaVersions),
+  },
+  {
+    relativePath: "public-portfolio-manifest.json",
+    content: serializePublicPortfolioManifest(configuration, mediaVersions),
+  },
+];
 
 if (process.argv.includes("--check")) {
-  let current = "";
-  try {
-    current = await readFile(outputPath, "utf8");
-  } catch {
-    // Report the same actionable error for a missing or stale generated file.
+  for (const artifact of artifacts) {
+    const artifactPath = path.join(repositoryRoot, artifact.relativePath);
+    try {
+      await verifyGeneratedArtifact(repositoryRoot, artifact);
+    } catch (error) {
+      throw new Error(
+        `${path.basename(artifactPath)} is stale; run npm run manifest:public`,
+        { cause: error },
+      );
+    }
   }
-  if (current !== expected) {
-    throw new Error("public-portfolio-manifest.json is stale; run npm run manifest:public");
-  }
-  console.log("Verified the committed public GitHub Pages manifest.");
+  console.log("Verified the committed public media versions and GitHub Pages manifest.");
 } else {
-  await writeFile(outputPath, expected, { mode: 0o644 });
-  console.log("Generated public-portfolio-manifest.json.");
+  await writeGeneratedArtifacts(repositoryRoot, artifacts);
+  console.log("Generated public-media-versions.json and public-portfolio-manifest.json.");
 }
