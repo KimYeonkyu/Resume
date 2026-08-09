@@ -202,7 +202,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 17, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 19, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,
@@ -230,11 +230,10 @@ def test_existing_public_image_categories_still_load(
         personal_paths = images.evaluate_all(
             "nodes => nodes.map(image => decodeURIComponent(new URL(image.src).pathname))"
         )
-        assert personal_paths[-3:] == [
-            "/개인작/15.jpg",
-            "/개인작/15-1.jpg",
-            "/개인작/16.jpg",
-        ]
+        personal = next(
+            project for project in CONFIGURATION["projects"] if project["id"] == "personal"
+        )
+        assert personal_paths == [f"/{item['sourcePath']}" for item in personal["items"]]
     images.evaluate_all("nodes => nodes.forEach(image => image.loading = 'eager')")
     page.wait_for_function(
         "() => [...document.querySelectorAll('#gallery-grid img')].every(image => image.complete)",

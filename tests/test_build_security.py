@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -62,6 +64,29 @@ def public_asset_paths() -> set[str]:
             if item.get("posterPath"):
                 paths.add(item["posterPath"])
     return paths
+
+
+def natural_filename_key(path: Path) -> tuple[tuple[int, int | str], ...]:
+    normalized = unicodedata.normalize("NFKC", path.stem).casefold()
+    return tuple(
+        (0, int(part)) if part.isdigit() else (1, part)
+        for part in re.split(r"(\d+)", normalized)
+    )
+
+
+def test_personal_manifest_matches_repository_image_inventory_in_natural_order() -> None:
+    personal = next(project for project in CONFIGURATION["projects"] if project["id"] == "personal")
+    declared = [item["sourcePath"] for item in personal["items"]]
+    actual = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in sorted(
+            (REPO_ROOT / "개인작").iterdir(),
+            key=natural_filename_key,
+        )
+        if path.is_file() and path.suffix.casefold() in {".jpg", ".jpeg", ".png", ".webp"}
+    ]
+
+    assert declared == actual
 
 
 def combined_public_text() -> str:
