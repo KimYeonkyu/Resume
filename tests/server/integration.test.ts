@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import type { Server } from "node:http";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { request as httpRequest, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import committedPublicManifest from "../../public-portfolio-manifest.json";
 import { createPortfolioApplication } from "../../src/application";
 import {
   createExternalProtectedMediaStore,
@@ -35,6 +37,22 @@ interface Fixture {
 }
 
 const fixtures: Fixture[] = [];
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+interface DisplayManifest {
+  projects: Array<{
+    id: string;
+    items: Array<{ locked?: boolean; poster?: string; url?: string }>;
+  }>;
+}
+
+async function expectedPublicAssetUrl(sourcePath: string): Promise<string> {
+  const version = createHash("sha256")
+    .update(await readFile(path.join(repositoryRoot, sourcePath)))
+    .digest("hex");
+  const encodedPath = sourcePath.split("/").map(encodeURIComponent).join("/");
+  return `/${encodedPath}?v=${version}`;
+}
 
 async function makeFixture(options: { limiter?: BoundedRateLimiter; password?: string } = {}): Promise<Fixture> {
   const root = await mkdtemp(path.join(tmpdir(), "portfolio-node-integration-"));
@@ -70,6 +88,8 @@ async function makeFixture(options: { limiter?: BoundedRateLimiter; password?: s
   const staticStore = await createPublicAssetStore({
     root: publicRoot,
     allowedPaths: new Set(["index.html", "portfolio.js", "public-portfolio-manifest.json"]),
+    mediaVersions: {},
+    versionedPaths: new Set(),
   });
   const { password, secrets } = makeSyntheticSecrets(options.password);
   const application = createPortfolioApplication({
@@ -209,6 +229,60 @@ describe("loopback Node portfolio integration", () => {
     expect(serialized).not.toContain("/protected/");
   });
 
+  it("uses current public media content versions for guests and authenticated viewers", async () => {
+    const fixture = await makeFixture();
+    const guestResponse = await requestServer(fixture.server, { path: "/api/projects?mode=public" });
+    const cookie = await login(fixture);
+    const authenticatedResponse = await requestServer(fixture.server, {
+      path: "/api/projects",
+      headers: { Cookie: cookie },
+    });
+    const guest = JSON.parse(guestResponse.body.toString("utf8")) as DisplayManifest;
+    const authenticated = JSON.parse(
+      authenticatedResponse.body.toString("utf8"),
+    ) as DisplayManifest;
+
+    for (const project of portfolioConfiguration.projects) {
+      const guestProject = guest.projects.find((candidate) => candidate.id === project.id);
+      const authenticatedProject = authenticated.projects.find(
+        (candidate) => candidate.id === project.id,
+      );
+      expect(guestProject).toBeDefined();
+      expect(authenticatedProject).toBeDefined();
+
+      for (const [index, item] of project.items.entries()) {
+        const selected = project.protected || ("protected" in item && item.protected === true);
+        if (selected) {
+          expect(guestProject?.items[index]).toMatchObject({ locked: true });
+          if (!("routeId" in item)) throw new Error("Protected test item lacks a route ID");
+          expect(authenticatedProject?.items[index].url).toBe(`/protected/${item.routeId}`);
+          continue;
+        }
+
+        const expectedUrl = await expectedPublicAssetUrl(item.sourcePath);
+        expect(guestProject?.items[index].url).toBe(expectedUrl);
+        expect(authenticatedProject?.items[index].url).toBe(expectedUrl);
+        const staticProject = committedPublicManifest.projects.find(
+          (candidate) => candidate.id === project.id,
+        );
+        const staticItem = staticProject?.items[index];
+        if (!staticItem || !("url" in staticItem)) {
+          throw new Error("Committed public manifest lacks a configured public item");
+        }
+        expect(expectedUrl).toBe(`/${staticItem.url}`);
+        if ("posterPath" in item) {
+          const expectedPoster = await expectedPublicAssetUrl(item.posterPath);
+          expect(guestProject?.items[index].poster).toBe(expectedPoster);
+          expect(authenticatedProject?.items[index].poster).toBe(expectedPoster);
+          if (!("poster" in staticItem)) {
+            throw new Error("Committed public manifest lacks a configured public poster");
+          }
+          expect(expectedPoster).toBe(`/${staticItem.poster}`);
+        }
+      }
+    }
+  });
+
   it.each(["GET", "HEAD"])(
     "rejects unauthenticated %s media before any protected file open",
     async (method) => {
@@ -342,6 +416,166 @@ describe("loopback Node portfolio integration", () => {
     expect([400, 404]).toContain(traversal.status);
     expect(fixture.mediaOpen).not.toHaveBeenCalled();
   });
+
+  it("cancels a streaming response body promptly when the client disconnects", async () => {
+    let cancelBody!: () => void;
+    let pullCount = 0;
+    const bodyCancelled = new Promise<void>((resolve) => {
+      cancelBody = resolve;
+    });
+    const application = {
+      async handle() {
+        const body = new ReadableStream<Uint8Array>({
+          pull(controller) {
+            pullCount += 1;
+            controller.enqueue(new Uint8Array(64 * 1_024));
+          },
+          cancel() {
+            cancelBody();
+          },
+        });
+        return new Response(body, {
+          headers: { "Content-Type": "application/octet-stream" },
+        });
+      },
+    };
+    const onError = vi.fn();
+    const server = createPortfolioHttpServer({
+      application,
+      canonicalOrigin: CANONICAL_ORIGIN,
+      onError,
+    });
+    await listenLoopback(server, { host: "127.0.0.1", port: 0 });
+
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Test server is not listening");
+      await new Promise<void>((resolve, reject) => {
+        const request = httpRequest(
+          {
+            host: "127.0.0.1",
+            port: address.port,
+            path: "/stream",
+            headers: {
+              Host: "portfolio.example",
+              "X-Forwarded-For": "192.0.2.10",
+              "X-Forwarded-Proto": "https",
+            },
+          },
+          (response) => {
+            response.once("data", () => {
+              response.destroy();
+              resolve();
+            });
+            response.once("error", (error: NodeJS.ErrnoException) => {
+              if (error.code === "ECONNRESET") resolve();
+              else reject(error);
+            });
+          },
+        );
+        request.once("error", reject);
+        request.end();
+      });
+
+      let timer: NodeJS.Timeout | undefined;
+      try {
+        await Promise.race([
+          bodyCancelled,
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(
+              () => reject(new Error("Streaming response body was not cancelled after disconnect")),
+              1_000,
+            );
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(onError).not.toHaveBeenCalled();
+      expect(pullCount).toBeGreaterThan(0);
+    } finally {
+      await closeGracefully(server, { timeoutMs: 1_000 });
+    }
+  });
+
+  it.each([undefined, "ECONNRESET"] as const)(
+    "reports a source-stream %s failure exactly once and keeps the server alive",
+    async (errorCode) => {
+      const sourceFailure = Object.assign(new Error("synthetic response source failure"),
+        errorCode ? { code: errorCode } : {},
+      );
+      const application = {
+        async handle() {
+          return new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.error(sourceFailure);
+              },
+            }),
+          );
+        },
+      };
+      const onError = vi.fn();
+      const server = createPortfolioHttpServer({
+        application,
+        canonicalOrigin: CANONICAL_ORIGIN,
+        onError,
+      });
+      await listenLoopback(server, { host: "127.0.0.1", port: 0 });
+
+      try {
+        const address = server.address();
+        if (!address || typeof address === "string") throw new Error("Test server is not listening");
+        const clientSettled = new Promise<void>((resolve) => {
+          const request = httpRequest(
+            {
+              host: "127.0.0.1",
+              port: address.port,
+              path: "/stream-error",
+              headers: {
+                Host: "portfolio.example",
+                "X-Forwarded-For": "192.0.2.10",
+                "X-Forwarded-Proto": "https",
+              },
+            },
+            (response) => {
+              response.resume();
+              response.once("aborted", resolve);
+              response.once("close", resolve);
+              response.once("end", resolve);
+              response.once("error", resolve);
+            },
+          );
+          request.once("error", resolve);
+          request.end();
+        });
+        let timer: NodeJS.Timeout | undefined;
+        try {
+          await Promise.race([
+            clientSettled,
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => reject(new Error("Source-failure client did not settle")), 1_000);
+            }),
+          ]);
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onError).toHaveBeenCalledWith(sourceFailure);
+
+        const health = await requestServer(server, {
+          path: "/healthz",
+          proxyHeaders: false,
+          headers: { Host: "127.0.0.1" },
+        });
+        expect(health.status).toBe(200);
+      } finally {
+        await closeGracefully(server, { timeoutMs: 1_000 });
+      }
+    },
+  );
 
   it("provides loopback health and closes gracefully", async () => {
     const fixture = await makeFixture();

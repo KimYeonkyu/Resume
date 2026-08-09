@@ -1,7 +1,12 @@
 import { createPortfolioApplication } from "./application";
 import { createExternalProtectedMediaStore } from "./media-store";
 import { closeGracefully, createPortfolioHttpServer, listenLoopback } from "./node-server";
-import { allProtectedItems, publicRuntimeAssetPaths } from "./portfolio";
+import {
+  allProtectedItems,
+  publicRuntimeAssetPaths,
+  publicRuntimeMediaPaths,
+  publicRuntimeMediaVersions,
+} from "./portfolio";
 import { BoundedRateLimiter } from "./rate-limiter";
 import { loadRuntimeSettings } from "./runtime-config";
 import { createPublicAssetStore } from "./static-store";
@@ -16,7 +21,9 @@ async function main(): Promise<void> {
     }),
     createPublicAssetStore({
       allowedPaths: publicRuntimeAssetPaths(),
+      mediaVersions: publicRuntimeMediaVersions(),
       root: settings.publicRoot,
+      versionedPaths: publicRuntimeMediaPaths(),
     }),
   ]);
   const rateLimiter = new BoundedRateLimiter({

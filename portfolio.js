@@ -120,7 +120,7 @@ async function enterPublicPortfolio() {
     try {
         let manifest;
         if (isStaticPublicSite()) {
-            manifest = await requestJson('./public-portfolio-manifest.json');
+            manifest = await requestJson('./public-portfolio-manifest.json', { cache: 'no-store' });
         } else {
             const logoutResponse = await fetch('/api/auth/logout', {
                 method: 'POST',

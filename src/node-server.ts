@@ -108,6 +108,72 @@ function toFetchRequest(
   return new Request(new URL(target, canonicalOrigin), init);
 }
 
+function expectedDestinationDisconnect(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = Reflect.get(error, "code");
+  return code === "ERR_STREAM_PREMATURE_CLOSE" || code === "ECONNRESET" || code === "EPIPE";
+}
+
+async function pipeFetchResponseBody(
+  outgoing: ServerResponse,
+  body: ReadableStream<Uint8Array>,
+): Promise<void> {
+  const stream = Readable.fromWeb(
+    body as unknown as import("node:stream/web").ReadableStream,
+  );
+  await new Promise<void>((resolve, reject) => {
+    let destinationClosing = false;
+    let destinationFailure: unknown;
+    let settled = false;
+
+    const cleanup = () => {
+      stream.off("close", onSourceClose);
+      stream.off("error", onSourceError);
+      outgoing.off("close", onDestinationClose);
+      outgoing.off("error", onDestinationError);
+      outgoing.off("finish", onDestinationFinish);
+    };
+    const settle = (error?: unknown) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error === undefined) resolve();
+      else reject(error);
+    };
+    const onSourceClose = () => {
+      if (destinationClosing) settle(destinationFailure);
+    };
+    const onSourceError = (error: Error) => {
+      if (destinationClosing) return;
+      settle(error);
+      if (!outgoing.destroyed) outgoing.destroy(error);
+    };
+    const closeSourceForDestination = (error?: unknown) => {
+      destinationClosing = true;
+      if (error !== undefined && !expectedDestinationDisconnect(error)) {
+        destinationFailure = error;
+      }
+      stream.unpipe(outgoing);
+      if (!stream.destroyed) stream.destroy();
+      if (stream.closed) queueMicrotask(() => settle(destinationFailure));
+    };
+    const onDestinationClose = () => {
+      if (outgoing.writableFinished) settle();
+      else closeSourceForDestination();
+    };
+    const onDestinationError = (error: Error) => closeSourceForDestination(error);
+    const onDestinationFinish = () => settle();
+
+    stream.once("close", onSourceClose);
+    stream.once("error", onSourceError);
+    outgoing.once("close", onDestinationClose);
+    outgoing.once("error", onDestinationError);
+    outgoing.once("finish", onDestinationFinish);
+    if (outgoing.destroyed) closeSourceForDestination();
+    else stream.pipe(outgoing);
+  });
+}
+
 async function writeFetchResponse(
   outgoing: ServerResponse,
   response: Response,
@@ -132,11 +198,7 @@ async function writeFetchResponse(
     outgoing.end();
     return;
   }
-  const stream = Readable.fromWeb(
-    response.body as unknown as import("node:stream/web").ReadableStream,
-  );
-  stream.once("error", (error) => outgoing.destroy(error));
-  stream.pipe(outgoing);
+  await pipeFetchResponseBody(outgoing, response.body);
 }
 
 function simpleJsonResponse(status: number, body: unknown): Response {
@@ -206,17 +268,22 @@ export function createPortfolioHttpServer(options: {
         await writeFetchResponse(outgoing, response, request.method);
       } catch (error) {
         if (!(error instanceof ProxyBoundaryError)) options.onError?.(error);
-        if (outgoing.headersSent) {
-          outgoing.destroy();
+        if (outgoing.headersSent || outgoing.destroyed) {
+          if (!outgoing.destroyed) outgoing.destroy();
           return;
         }
-        await writeFetchResponse(
-          outgoing,
-          simpleJsonResponse(error instanceof ProxyBoundaryError ? 421 : 500, {
-            error: error instanceof ProxyBoundaryError ? "Misdirected request" : "Internal server error",
-          }),
-          incoming.method ?? "GET",
-        );
+        try {
+          await writeFetchResponse(
+            outgoing,
+            simpleJsonResponse(error instanceof ProxyBoundaryError ? 421 : 500, {
+              error: error instanceof ProxyBoundaryError ? "Misdirected request" : "Internal server error",
+            }),
+            incoming.method ?? "GET",
+          );
+        } catch (fallbackError) {
+          options.onError?.(fallbackError);
+          if (!outgoing.destroyed) outgoing.destroy();
+        }
       }
     },
   );
