@@ -495,6 +495,13 @@ function closeContact() {
     state.contactLastFocusedElement?.focus();
 }
 
+function handleEntranceClick(event) {
+    if (elements.entranceActions.hidden || elements.publicChoice.disabled) return;
+    if (event.target.closest('#public-choice, #interview-choice, #login-form')) return;
+    void enterPublicPortfolio();
+}
+
+elements.entrance.addEventListener('click', handleEntranceClick);
 elements.interviewChoice.addEventListener('click', enterInterviewPortfolio);
 elements.publicChoice.addEventListener('click', enterPublicPortfolio);
 elements.loginBack.addEventListener('click', showEntranceChoices);

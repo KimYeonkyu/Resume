@@ -25,6 +25,7 @@ const CONTENT_TYPES = new Map([
   [".json", "application/json; charset=utf-8"],
   [".jpg", "image/jpeg"],
   [".jpeg", "image/jpeg"],
+  [".webp", "image/webp"],
   [".mp4", "video/mp4"],
   [".pdf", "application/pdf"],
 ]);
