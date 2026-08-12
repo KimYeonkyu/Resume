@@ -332,7 +332,6 @@ async function enterPublicPortfolio() {
             manifest = await requestJson('./public-portfolio-manifest.json', { cache: 'no-store' });
         } else {
             const logoutIntent = { kind: 'logout', id: makeSessionIntentId() };
-            publishLogoutIntent(logoutIntent);
             const logoutMutation = mutateSession(
                 '/api/auth/logout',
                 {
@@ -341,6 +340,7 @@ async function enterPublicPortfolio() {
                 },
                 { onLockAcquired: () => commitSessionIntent(logoutIntent) },
             );
+            publishLogoutIntent(logoutIntent);
             const logoutResponse = await logoutMutation;
             if (!logoutResponse.ok) throw new Error('Guest session reset failed');
             if (!isCurrentAccessFlow(generation)) return;
@@ -385,7 +385,8 @@ function showGallery(manifest) {
 
 function discardProtectedGallery() {
     if (elements.detailModal.hidden) cleanupViewerMedia();
-    else closeViewer();
+    else closeViewer({ restoreFocus: false });
+    state.lastFocusedElement = null;
     state.projects = [];
     state.currentProjectId = null;
     state.currentItemIndex = 0;
@@ -483,7 +484,6 @@ async function relockPortfolio() {
     elements.galleryError.textContent = '';
     try {
         const logoutIntent = { kind: 'logout', id: makeSessionIntentId() };
-        publishLogoutIntent(logoutIntent);
         const logoutMutation = mutateSession(
             '/api/auth/logout',
             {
@@ -492,6 +492,7 @@ async function relockPortfolio() {
             },
             { onLockAcquired: () => commitSessionIntent(logoutIntent) },
         );
+        publishLogoutIntent(logoutIntent);
         const response = await logoutMutation;
         if (!response.ok) throw new Error('Logout failed');
         if (!isCurrentAccessFlow(generation)) return;
@@ -708,7 +709,9 @@ function openViewer(index, source) {
     elements.modalClose.focus();
 }
 
-function closeViewer() {
+function closeViewer({ restoreFocus = true } = {}) {
+    const lastFocusedElement = state.lastFocusedElement;
+    state.lastFocusedElement = null;
     if (elements.detailModal.hidden) return;
     cleanupViewerMedia();
     elements.detailModal.hidden = true;
@@ -718,7 +721,7 @@ function closeViewer() {
     state.touchStartX = null;
     state.touchStartY = null;
     window.clearTimeout(state.viewerInfoTimer);
-    state.lastFocusedElement?.focus();
+    if (restoreFocus) lastFocusedElement?.focus();
 }
 
 function moveViewer(offset) {

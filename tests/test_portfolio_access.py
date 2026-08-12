@@ -337,6 +337,18 @@ def wait_for_pending_session_lock(page: Page, expected_path: str) -> None:
     assert state == {"pending": True, "invoked": False}
 
 
+def wait_for_held_session_lock(page: Page, expected_path: str) -> None:
+    lock_state = {"lockName": SESSION_MUTATION_LOCK, "path": expected_path}
+    page.wait_for_function(
+        """async ({ lockName, path }) => {
+            const snapshot = await navigator.locks.query();
+            return snapshot.held.some(lock => lock.name === lockName)
+                && window.__sessionMutationFetches.includes(path);
+        }""",
+        arg=lock_state,
+    )
+
+
 def install_session_mutation_probe(page: Page) -> None:
     page.add_init_script(
         """(() => {
@@ -1127,6 +1139,146 @@ def test_delayed_login_in_one_tab_finishes_before_newer_logout_in_another(
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
 
 
+def test_newer_logout_supersedes_login_queued_behind_an_older_logout(
+    page: Page, portfolio_url: str
+) -> None:
+    configured_password = secrets.token_urlsafe(32)
+    calls = install_interview_api(page, configured_password, defer_logout=True)
+    install_session_mutation_probe(page)
+    page.expose_function(
+        "__pendingLogoutCountForTest",
+        lambda: len(calls["pending_logout"]),
+    )
+    origin = portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]
+
+    login_page = page.context.new_page()
+    newer_logout_page = page.context.new_page()
+    for candidate in (login_page, newer_logout_page):
+        install_session_mutation_probe(candidate)
+
+    for candidate in (page, login_page, newer_logout_page):
+        candidate.goto(portfolio_url, wait_until="domcontentloaded")
+
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
+    wait_for_held_session_lock(page, "/api/auth/logout")
+
+    login_page.get_by_role(
+        "button", name="면접용 전체 포트폴리오", exact=True
+    ).click()
+    login_page.get_by_label("비밀번호").fill(configured_password)
+    login_page.get_by_label("비밀번호").press("Enter")
+    wait_for_pending_session_lock(login_page, "/api/auth/login")
+    page.wait_for_function(
+        "async () => await window.__pendingLogoutCountForTest() === 1"
+    )
+    pending_logout = calls["pending_logout"]
+    assert isinstance(pending_logout, list)
+
+    newer_logout_page.get_by_role(
+        "button", name="공개 포트폴리오", exact=True
+    ).press("Enter")
+    wait_for_pending_session_lock(newer_logout_page, "/api/auth/logout")
+
+    older_logout = pending_logout.pop(0)
+    assert isinstance(older_logout, Route)
+    with newer_logout_page.expect_request("**/api/auth/logout"):
+        older_logout.fulfill(
+            status=204,
+            headers={
+                "Set-Cookie": "browser_session=; Max-Age=0; Path=/; SameSite=Strict"
+            },
+        )
+
+    wait_for_held_session_lock(newer_logout_page, "/api/auth/logout")
+    page.wait_for_function(
+        "async () => await window.__pendingLogoutCountForTest() === 1"
+    )
+    assert calls["login"] == 0
+    assert calls["logout"] == 2
+    for candidate in (page, login_page, newer_logout_page):
+        assert candidate.locator("#gallery-shell").is_hidden()
+        assert candidate.locator(
+            '[src*="/protected/"], [poster*="/protected/"]'
+        ).count() == 0
+
+    newest_logout = pending_logout.pop(0)
+    assert isinstance(newest_logout, Route)
+    newest_logout.fulfill(
+        status=204,
+        headers={
+            "Set-Cookie": "browser_session=; Max-Age=0; Path=/; SameSite=Strict"
+        },
+    )
+    newer_logout_page.locator("#gallery-shell").wait_for(state="visible")
+    newer_logout_page.wait_for_function(
+        """async lockName => {
+            const snapshot = await navigator.locks.query();
+            return !snapshot.held.some(lock => lock.name === lockName)
+                && !snapshot.pending.some(lock => lock.name === lockName);
+        }""",
+        arg=SESSION_MUTATION_LOCK,
+    )
+
+    session = newer_logout_page.evaluate(
+        "() => fetch('/api/auth/session').then(response => response.json())"
+    )
+    protected_urls = calls["protected_urls"]
+    assert isinstance(protected_urls, dict)
+    protected_status = newer_logout_page.evaluate(
+        "url => fetch(url).then(response => response.status)",
+        protected_urls["project-mp"][0],
+    )
+    assert session == {"authenticated": False}
+    assert protected_status == 401
+    assert all(
+        cookie.get("name") != "browser_session"
+        for cookie in page.context.cookies(origin)
+    )
+    for candidate in (page, login_page, newer_logout_page):
+        assert candidate.locator(
+            '[src*="/protected/"], [poster*="/protected/"]'
+        ).count() == 0
+        if candidate.locator("#gallery-shell").is_visible():
+            assert candidate.locator("#access-status").text_content() == "공개 보기"
+
+
+def test_logout_registers_web_lock_before_publishing_cross_tab_intent(
+    page: Page, portfolio_url: str
+) -> None:
+    configured_password = secrets.token_urlsafe(32)
+    install_interview_api(page, configured_password)
+    page.add_init_script(
+        f"""(() => {{
+            window.__sessionCoordinationOrder = [];
+            const originalRequest = LockManager.prototype.request;
+            LockManager.prototype.request = function (...args) {{
+                if (args[0] === {json.dumps(SESSION_MUTATION_LOCK)}) {{
+                    window.__sessionCoordinationOrder.push('lock-request');
+                }}
+                return originalRequest.apply(this, args);
+            }};
+            const originalSetItem = Storage.prototype.setItem;
+            Storage.prototype.setItem = function (key, value) {{
+                if (key === {json.dumps(SESSION_INTENT_STORAGE_KEY)}) {{
+                    window.__sessionCoordinationOrder.push('intent-storage');
+                }}
+                return originalSetItem.call(this, key, value);
+            }};
+        }})();"""
+    )
+
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
+    page.wait_for_function(
+        "() => window.__sessionCoordinationOrder.includes('intent-storage')"
+    )
+
+    assert page.evaluate("window.__sessionCoordinationOrder.slice(0, 2)") == [
+        "lock-request",
+        "intent-storage",
+    ]
+
+
 @pytest.mark.parametrize("delivery", ["broadcast", "storage"])
 def test_successful_login_ignores_superseded_logout_notification(
     page: Page, portfolio_url: str, delivery: str
@@ -1185,6 +1337,18 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
 ) -> None:
     configured_password = secrets.token_urlsafe(32)
     calls = install_interview_api(page, configured_password, defer_logout=True)
+    instrumented_script = (
+        (STATIC_ROOT / "portfolio.js").read_text(encoding="utf-8")
+        + "\nwindow.__getLastFocusedElementForTest = () => state.lastFocusedElement;\n"
+    )
+    page.route(
+        "**/portfolio.js",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="text/javascript; charset=utf-8",
+            body=instrumented_script,
+        ),
+    )
 
     page.goto(portfolio_url, wait_until="domcontentloaded")
     page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
@@ -1215,6 +1379,15 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
 
     page.wait_for_function("() => document.querySelector('#gallery-shell').hidden")
     assert relock_page.locator("#gallery-shell").is_hidden()
+    retained_viewer_source = page.evaluate(
+        """() => ({
+            retained: window.__getLastFocusedElementForTest() !== null,
+            protectedMedia: window.__getLastFocusedElementForTest()?.querySelectorAll(
+                '[src*="/protected/"], [poster*="/protected/"]'
+            ).length ?? 0,
+        })"""
+    )
+    assert retained_viewer_source == {"retained": False, "protectedMedia": 0}
     for candidate in (page, relock_page):
         assert candidate.locator("#detail-modal").is_hidden()
         assert candidate.locator(
