@@ -186,7 +186,11 @@ def authenticated_manifest(protected_urls: dict[str, list[str]]) -> dict[str, ob
 
 
 def install_interview_api(
-    page: Page, configured_password: str, *, logout_status: int = 204
+    page: Page,
+    configured_password: str,
+    *,
+    logout_status: int = 204,
+    defer_logout: bool = False,
 ) -> dict[str, object]:
     session_value = secrets.token_hex(24)
     protected_urls = {
@@ -204,6 +208,7 @@ def install_interview_api(
         "protected": [],
         "protected_urls": protected_urls,
         "session_value": session_value,
+        "pending_logout": [],
     }
 
     def has_session(route: Route) -> bool:
@@ -234,6 +239,11 @@ def install_interview_api(
             return
         if path.endswith("/api/auth/logout"):
             calls["logout"] = int(calls["logout"]) + 1
+            if defer_logout:
+                pending_logout = calls["pending_logout"]
+                assert isinstance(pending_logout, list)
+                pending_logout.append(route)
+                return
             if logout_status == 204:
                 route.fulfill(
                     status=204,
@@ -469,6 +479,53 @@ def test_short_entrance_keeps_full_artwork_and_identity_reachable(
     page.mouse.click(width / 2, height / 2)
     page.locator("#gallery-shell").wait_for(state="visible")
     assert page.locator("#access-status").text_content() == "공개 보기"
+
+
+def test_short_entrance_supports_real_touch_swipe(
+    page: Page, portfolio_url: str
+) -> None:
+    width, height = 1024, 300
+    page.set_viewport_size({"width": width, "height": height})
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+
+    entrance = page.locator("#entrance-screen")
+    subtitle = page.get_by_text("Environment concept artist", exact=True)
+    assert entrance.evaluate("element => element.scrollTop") == 0
+    assert entrance.evaluate("element => element.scrollHeight > element.clientHeight")
+
+    cdp = page.context.new_cdp_session(page)
+    cdp.send(
+        "Emulation.setTouchEmulationEnabled",
+        {"enabled": True, "maxTouchPoints": 1},
+    )
+    x = width // 2
+    start_y = height - 35
+    cdp.send(
+        "Input.dispatchTouchEvent",
+        {
+            "type": "touchStart",
+            "touchPoints": [{"x": x, "y": start_y}],
+        },
+    )
+    for y in range(start_y - 30, 40, -30):
+        cdp.send(
+            "Input.dispatchTouchEvent",
+            {
+                "type": "touchMove",
+                "touchPoints": [{"x": x, "y": y}],
+            },
+        )
+        page.wait_for_timeout(16)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+    page.wait_for_function(
+        "document.querySelector('#entrance-screen').scrollTop > 0"
+    )
+    subtitle_box = subtitle.bounding_box()
+    assert subtitle_box is not None
+    assert subtitle_box["y"] >= 0
+    assert subtitle_box["y"] + subtitle_box["height"] <= height
 
 
 def test_clicking_anywhere_on_cover_enters_public_portfolio(
@@ -764,6 +821,73 @@ def test_explicit_public_choice_wins_a_delayed_authenticated_restore(
     page.get_by_role("button", name="Project MP", exact=True).click()
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
     assert calls["protected"] == []
+
+
+def test_delayed_public_logout_finishes_before_new_interview_login(
+    page: Page, portfolio_url: str
+) -> None:
+    configured_password = secrets.token_urlsafe(32)
+    calls = install_interview_api(page, configured_password, defer_logout=True)
+    origin = portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]
+
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    public_choice = page.get_by_role(
+        "button", name="공개 포트폴리오", exact=True
+    )
+    public_choice.press("Enter")
+    expect(public_choice).to_be_disabled()
+
+    for _ in range(50):
+        if calls["logout"] == 1:
+            break
+        page.wait_for_timeout(10)
+    assert calls["logout"] == 1
+    pending_logout = calls["pending_logout"]
+    assert isinstance(pending_logout, list)
+    assert len(pending_logout) == 1
+
+    page.get_by_role(
+        "button", name="면접용 전체 포트폴리오", exact=True
+    ).click()
+    page.get_by_label("비밀번호").fill(configured_password)
+    page.get_by_label("비밀번호").press("Enter")
+    page.wait_for_timeout(100)
+    login_calls = calls["login"]
+    assert isinstance(login_calls, int)
+    login_calls_before_logout_finished = login_calls
+
+    delayed_logout = pending_logout.pop()
+    assert isinstance(delayed_logout, Route)
+    delayed_logout.fulfill(
+        status=204,
+        headers={
+            "Set-Cookie": "browser_session=; Max-Age=0; Path=/; SameSite=Strict"
+        },
+    )
+
+    page.locator("#gallery-shell").wait_for(state="visible")
+    page.wait_for_timeout(100)
+    cookies = page.context.cookies(origin)
+    session = page.evaluate(
+        "() => fetch('/api/auth/session').then(response => response.json())"
+    )
+    protected_urls = calls["protected_urls"]
+    assert isinstance(protected_urls, dict)
+    protected_status = page.evaluate(
+        "url => fetch(url).then(response => response.status)",
+        protected_urls["project-mp"][0],
+    )
+
+    assert login_calls_before_logout_finished == 0
+    session_value = calls["session_value"]
+    assert isinstance(session_value, str)
+    assert any(
+        cookie.get("name") == "browser_session" and cookie.get("value") == session_value
+        for cookie in cookies
+    )
+    assert session == {"authenticated": True}
+    assert protected_status == 200
+    assert page.locator("#access-status").text_content() == "면접용 전체 보기"
 
 
 @pytest.mark.parametrize("viewport", [(390, 844), (320, 568)])

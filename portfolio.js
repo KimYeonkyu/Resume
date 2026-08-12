@@ -10,6 +10,7 @@ const state = {
     contactInertStates: [],
     contactLastFocusedElement: null,
     accessFlowGeneration: 0,
+    sessionMutationTail: Promise.resolve(),
 };
 
 const ACCESS_MODE_KEY = 'portfolio-access-mode';
@@ -83,6 +84,18 @@ function isCurrentAccessFlow(generation) {
     return state.accessFlowGeneration === generation;
 }
 
+function mutateSession(url, options) {
+    const operation = state.sessionMutationTail.then(() => fetch(url, {
+        credentials: 'same-origin',
+        ...options,
+    }));
+    state.sessionMutationTail = operation.then(
+        () => undefined,
+        () => undefined,
+    );
+    return operation;
+}
+
 async function requestJson(url, options = {}) {
     const headers = { Accept: 'application/json', ...(options.headers ?? {}) };
     const response = await fetch(url, {
@@ -122,9 +135,8 @@ async function enterPublicPortfolio() {
         if (isStaticPublicSite()) {
             manifest = await requestJson('./public-portfolio-manifest.json', { cache: 'no-store' });
         } else {
-            const logoutResponse = await fetch('/api/auth/logout', {
+            const logoutResponse = await mutateSession('/api/auth/logout', {
                 method: 'POST',
-                credentials: 'same-origin',
                 headers: { Accept: 'application/json' },
             });
             if (!logoutResponse.ok) throw new Error('Guest session reset failed');
@@ -179,9 +191,8 @@ async function submitLogin(event) {
     elements.loginBack.disabled = true;
 
     try {
-        const response = await fetch('/api/auth/login', {
+        const response = await mutateSession('/api/auth/login', {
             method: 'POST',
-            credentials: 'same-origin',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -213,9 +224,8 @@ async function relockPortfolio() {
     elements.galleryError.hidden = true;
     elements.galleryError.textContent = '';
     try {
-        const response = await fetch('/api/auth/logout', {
+        const response = await mutateSession('/api/auth/logout', {
             method: 'POST',
-            credentials: 'same-origin',
             headers: { Accept: 'application/json' },
         });
         if (!response.ok) throw new Error('Logout failed');
