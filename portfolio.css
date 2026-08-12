@@ -59,18 +59,21 @@ input:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 100;
-    display: flex;
-    align-items: center;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow: hidden;
+    overflow-y: auto;
     background: #101010;
 }
 
 .entrance-visual {
     position: relative;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     width: 100%;
+    min-height: 100%;
+    padding-bottom: 1px;
     pointer-events: none;
 }
 
@@ -124,7 +127,7 @@ input:focus-visible {
     padding: 0;
     border: 0;
     cursor: pointer;
-    pointer-events: auto;
+    pointer-events: none;
     background: transparent;
 }
 
@@ -143,21 +146,19 @@ input:focus-visible {
     width: 38px;
     height: 38px;
     padding: 0;
-    border: 1px solid rgb(255 255 255 / 10%);
+    border: 1px solid #6b6661;
     border-radius: 50%;
     color: #8b8883;
     cursor: pointer;
     pointer-events: auto;
-    background: rgb(12 12 12 / 42%);
-    opacity: .64;
-    transition: color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+    background: #0c0c0c;
+    transition: color 160ms ease, border-color 160ms ease;
 }
 
 .interview-key:hover,
 .interview-key:focus-visible {
-    border-color: rgb(255 255 255 / 28%);
+    border-color: rgb(255 255 255 / 48%);
     color: #d6d3d1;
-    opacity: 1;
 }
 
 .interview-key svg {

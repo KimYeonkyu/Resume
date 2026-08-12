@@ -130,7 +130,7 @@ def install_public_api(page: Page) -> None:
 def enter_public(page: Page, portfolio_url: str) -> None:
     install_public_api(page)
     page.goto(portfolio_url, wait_until="domcontentloaded")
-    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
 
@@ -378,7 +378,7 @@ def test_entrance_gallery_and_video_viewer_have_no_horizontal_overflow(
     page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
     assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
     page.get_by_role("button", name="선택으로 돌아가기", exact=True).click()
-    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
 
