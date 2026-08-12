@@ -10,9 +10,18 @@ const state = {
     contactInertStates: [],
     contactLastFocusedElement: null,
     accessFlowGeneration: 0,
+    localAccessFlowGeneration: 0,
+    currentSessionIntent: null,
+    sessionIntentStorageFallback: false,
+    handledSessionIntentIds: new Set(),
 };
 
 const ACCESS_MODE_KEY = 'portfolio-access-mode';
+const SESSION_MUTATION_LOCK = 'jin-kim-portfolio-session-mutation';
+const SESSION_MUTATION_TIMEOUT_MS = 10_000;
+const SESSION_LOCK_WAIT_TIMEOUT_MS = 30_000;
+const SESSION_INTENT_STORAGE_KEY = 'jin-kim-portfolio-session-intent';
+const SESSION_INTENT_CHANNEL_NAME = 'jin-kim-portfolio-session-intent';
 const STATIC_PUBLIC_HOSTNAME = 'kimyeonkyu.github.io';
 const INTERVIEW_URL = (() => {
     const raw = document.querySelector('meta[name="portfolio-interview-url"]')?.content ?? '';
@@ -70,17 +79,213 @@ const elements = {
     contactClose: document.querySelector('#contact-close-button'),
 };
 
+const sessionIntentChannel = typeof BroadcastChannel === 'function'
+    ? new BroadcastChannel(SESSION_INTENT_CHANNEL_NAME)
+    : null;
+
 function currentProject() {
     return state.projects.find((project) => project.id === state.currentProjectId) ?? null;
 }
 
-function beginAccessFlow() {
+function beginAccessFlow({ local = true } = {}) {
     state.accessFlowGeneration += 1;
+    if (local) state.localAccessFlowGeneration += 1;
     return state.accessFlowGeneration;
 }
 
 function isCurrentAccessFlow(generation) {
     return state.accessFlowGeneration === generation;
+}
+
+function rememberSessionIntent(intentId) {
+    if (state.handledSessionIntentIds.has(intentId)) return false;
+    state.handledSessionIntentIds.add(intentId);
+    if (state.handledSessionIntentIds.size > 64) {
+        state.handledSessionIntentIds.delete(state.handledSessionIntentIds.values().next().value);
+    }
+    return true;
+}
+
+function isSessionIntent(value) {
+    if (
+        !value
+        || typeof value !== 'object'
+        || (value.kind !== 'login' && value.kind !== 'logout')
+        || typeof value.id !== 'string'
+        || !/^[a-f0-9-]{16,64}$/.test(value.id)
+    ) return false;
+    if (value.kind === 'logout') return true;
+    return value.logoutIntentId === null
+        || (
+            typeof value.logoutIntentId === 'string'
+            && /^[a-f0-9-]{16,64}$/.test(value.logoutIntentId)
+        );
+}
+
+function readPersistedSessionIntent() {
+    try {
+        const raw = localStorage.getItem(SESSION_INTENT_STORAGE_KEY);
+        if (!raw || raw.length > 256) return null;
+        const parsed = JSON.parse(raw);
+        return isSessionIntent(parsed) ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+function currentSessionIntent() {
+    if (state.sessionIntentStorageFallback) return state.currentSessionIntent;
+    return readPersistedSessionIntent() ?? state.currentSessionIntent;
+}
+
+function latestLogoutIntentId() {
+    const intent = currentSessionIntent();
+    if (intent?.kind === 'logout') return intent.id;
+    return intent?.kind === 'login' ? intent.logoutIntentId : null;
+}
+
+function hasActiveLogoutIntent() {
+    return currentSessionIntent()?.kind === 'logout';
+}
+
+function makeSessionIntentId() {
+    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    if (typeof crypto.getRandomValues !== 'function') {
+        throw new Error('Secure session coordination is unavailable');
+    }
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    return [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+function readAccessMode() {
+    try {
+        return sessionStorage.getItem(ACCESS_MODE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function writeAccessMode(mode) {
+    try {
+        sessionStorage.setItem(ACCESS_MODE_KEY, mode);
+    } catch {
+        // In-memory generation and DOM purging remain fail-closed.
+    }
+}
+
+function clearAccessMode() {
+    try {
+        sessionStorage.removeItem(ACCESS_MODE_KEY);
+    } catch {
+        // No persisted mode is required for the current document.
+    }
+}
+
+function persistSessionIntent(intent) {
+    state.currentSessionIntent = intent;
+    try {
+        localStorage.setItem(SESSION_INTENT_STORAGE_KEY, JSON.stringify(intent));
+        state.sessionIntentStorageFallback = false;
+        return true;
+    } catch {
+        state.sessionIntentStorageFallback = true;
+        return false;
+    }
+}
+
+function broadcastSessionIntent(intent, persisted) {
+    try {
+        sessionIntentChannel?.postMessage({ intent, persisted });
+    } catch {
+        // A persisted storage event remains available when BroadcastChannel fails.
+    }
+}
+
+function commitSessionIntent(intent) {
+    rememberSessionIntent(intent.id);
+    const persisted = persistSessionIntent(intent);
+    broadcastSessionIntent(intent, persisted);
+}
+
+function applyRemoteSessionIntent(intent, requirePersistedMatch = true) {
+    if (!isSessionIntent(intent)) return;
+    if (requirePersistedMatch) {
+        const persisted = readPersistedSessionIntent();
+        if (!persisted || persisted.kind !== intent.kind || persisted.id !== intent.id) return;
+    }
+    if (!rememberSessionIntent(intent.id)) return;
+    state.currentSessionIntent = intent;
+    state.sessionIntentStorageFallback = !requirePersistedMatch;
+    if (intent.kind === 'login') return;
+    beginAccessFlow({ local: false });
+    writeAccessMode('public');
+    discardProtectedGallery();
+    elements.entranceStatus.textContent = '다른 창의 요청으로 보호 콘텐츠를 화면에서 제거했습니다.';
+}
+
+function publishLogoutIntent(intent) {
+    writeAccessMode('public');
+    discardProtectedGallery();
+    elements.entranceStatus.textContent = '보호 콘텐츠를 화면에서 제거하고 서버 잠금을 처리 중입니다.';
+    commitSessionIntent(intent);
+}
+
+sessionIntentChannel?.addEventListener('message', (event) => {
+    const envelope = event.data;
+    if (!envelope || typeof envelope !== 'object' || !('intent' in envelope)) return;
+    applyRemoteSessionIntent(envelope.intent, envelope.persisted !== false);
+});
+
+window.addEventListener('storage', (event) => {
+    if (event.key !== SESSION_INTENT_STORAGE_KEY || !event.newValue) return;
+    try {
+        applyRemoteSessionIntent(JSON.parse(event.newValue));
+    } catch {
+        // Ignore malformed same-origin coordination messages.
+    }
+});
+
+async function mutateSession(
+    url,
+    options,
+    { onLockAcquired = () => {}, onResponse = () => {} } = {},
+) {
+    if (!navigator.locks?.request || typeof AbortController !== 'function') {
+        throw new Error('Origin-wide session locking is unavailable');
+    }
+
+    const lockController = new AbortController();
+    const lockTimer = window.setTimeout(() => {
+        lockController.abort(new DOMException('Session lock timed out', 'TimeoutError'));
+    }, SESSION_LOCK_WAIT_TIMEOUT_MS);
+
+    try {
+        return await navigator.locks.request(
+            SESSION_MUTATION_LOCK,
+            { mode: 'exclusive', signal: lockController.signal },
+            async () => {
+                window.clearTimeout(lockTimer);
+                onLockAcquired();
+                const requestController = new AbortController();
+                const requestTimer = window.setTimeout(() => {
+                    requestController.abort(new DOMException('Session mutation timed out', 'TimeoutError'));
+                }, SESSION_MUTATION_TIMEOUT_MS);
+                try {
+                    const response = await fetch(url, {
+                        credentials: 'same-origin',
+                        ...options,
+                        signal: requestController.signal,
+                    });
+                    await onResponse(response);
+                    return response;
+                } finally {
+                    window.clearTimeout(requestTimer);
+                }
+            },
+        );
+    } finally {
+        window.clearTimeout(lockTimer);
+    }
 }
 
 async function requestJson(url, options = {}) {
@@ -103,8 +308,7 @@ function showLoginForm() {
     requestAnimationFrame(() => elements.passwordInput.focus());
 }
 
-function showEntranceChoices() {
-    beginAccessFlow();
+function renderEntranceChoices() {
     elements.loginForm.hidden = true;
     elements.entranceActions.hidden = false;
     elements.passwordInput.value = '';
@@ -112,9 +316,14 @@ function showEntranceChoices() {
     requestAnimationFrame(() => elements.interviewChoice.focus());
 }
 
+function showEntranceChoices() {
+    beginAccessFlow();
+    renderEntranceChoices();
+}
+
 async function enterPublicPortfolio() {
     const generation = beginAccessFlow();
-    sessionStorage.setItem(ACCESS_MODE_KEY, 'public');
+    writeAccessMode('public');
     elements.publicChoice.disabled = true;
     elements.entranceStatus.textContent = '';
     try {
@@ -122,11 +331,17 @@ async function enterPublicPortfolio() {
         if (isStaticPublicSite()) {
             manifest = await requestJson('./public-portfolio-manifest.json', { cache: 'no-store' });
         } else {
-            const logoutResponse = await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json' },
-            });
+            const logoutIntent = { kind: 'logout', id: makeSessionIntentId() };
+            const logoutMutation = mutateSession(
+                '/api/auth/logout',
+                {
+                    method: 'POST',
+                    headers: { Accept: 'application/json' },
+                },
+                { onLockAcquired: () => commitSessionIntent(logoutIntent) },
+            );
+            publishLogoutIntent(logoutIntent);
+            const logoutResponse = await logoutMutation;
             if (!logoutResponse.ok) throw new Error('Guest session reset failed');
             if (!isCurrentAccessFlow(generation)) return;
             manifest = await requestJson('/api/projects?mode=public');
@@ -168,9 +383,37 @@ function showGallery(manifest) {
     requestAnimationFrame(() => elements.galleryTitle.focus());
 }
 
+function discardProtectedGallery() {
+    closeContact({ restoreFocus: false });
+    if (elements.detailModal.hidden) cleanupViewerMedia();
+    else closeViewer({ restoreFocus: false });
+    state.lastFocusedElement = null;
+    state.projects = [];
+    state.currentProjectId = null;
+    state.currentItemIndex = 0;
+    elements.galleryGrid.replaceChildren();
+    elements.categoryTabs.replaceChildren();
+    elements.modalCategory.textContent = '';
+    elements.modalTitle.textContent = '';
+    elements.modalDescription.textContent = '';
+    elements.artworkCount.textContent = '0';
+    elements.relockButton.hidden = true;
+    elements.galleryShell.hidden = true;
+    elements.entrance.hidden = false;
+    renderEntranceChoices();
+}
+
 async function submitLogin(event) {
     event.preventDefault();
-    const generation = beginAccessFlow();
+    let generation = beginAccessFlow();
+    const localGeneration = state.localAccessFlowGeneration;
+    const logoutIntentAtSubmission = latestLogoutIntentId();
+    const loginIntent = {
+        kind: 'login',
+        id: makeSessionIntentId(),
+        logoutIntentId: logoutIntentAtSubmission,
+    };
+    let loginBarrierCommitted = false;
     const submitButton = elements.loginForm.querySelector('button[type="submit"]');
     const password = elements.passwordInput.value;
     elements.passwordInput.value = '';
@@ -179,21 +422,49 @@ async function submitLogin(event) {
     elements.loginBack.disabled = true;
 
     try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
+        const response = await mutateSession(
+            '/api/auth/login',
+            {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password }),
             },
-            body: JSON.stringify({ password }),
-        });
+            {
+                onLockAcquired: () => {
+                    if (latestLogoutIntentId() !== logoutIntentAtSubmission) {
+                        throw new Error('Login was superseded by a logout request');
+                    }
+                },
+                onResponse: (loginResponse) => {
+                    if (
+                        loginResponse.ok
+                        && state.localAccessFlowGeneration === localGeneration
+                        && latestLogoutIntentId() === logoutIntentAtSubmission
+                    ) {
+                        commitSessionIntent(loginIntent);
+                        loginBarrierCommitted = true;
+                    }
+                },
+            },
+        );
         if (!response.ok) throw new Error('Authentication failed');
-        if (!isCurrentAccessFlow(generation)) return;
+        if (
+            !loginBarrierCommitted
+            || state.localAccessFlowGeneration !== localGeneration
+            || latestLogoutIntentId() !== logoutIntentAtSubmission
+        ) return;
+        generation = beginAccessFlow({ local: false });
         const manifest = await requestJson('/api/projects');
-        if (!isCurrentAccessFlow(generation)) return;
+        if (
+            !isCurrentAccessFlow(generation)
+            || state.localAccessFlowGeneration !== localGeneration
+            || latestLogoutIntentId() !== logoutIntentAtSubmission
+        ) return;
         if (!manifest.authenticated) throw new Error('Session was not established');
-        sessionStorage.setItem(ACCESS_MODE_KEY, 'interview');
+        writeAccessMode('interview');
         showGallery(manifest);
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
@@ -213,32 +484,33 @@ async function relockPortfolio() {
     elements.galleryError.hidden = true;
     elements.galleryError.textContent = '';
     try {
-        const response = await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { Accept: 'application/json' },
-        });
+        const logoutIntent = { kind: 'logout', id: makeSessionIntentId() };
+        const logoutMutation = mutateSession(
+            '/api/auth/logout',
+            {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+            },
+            { onLockAcquired: () => commitSessionIntent(logoutIntent) },
+        );
+        publishLogoutIntent(logoutIntent);
+        const response = await logoutMutation;
         if (!response.ok) throw new Error('Logout failed');
         if (!isCurrentAccessFlow(generation)) return;
         sessionCleared = true;
-        sessionStorage.setItem(ACCESS_MODE_KEY, 'public');
+        writeAccessMode('public');
+        discardProtectedGallery();
         const manifest = await requestJson('/api/projects?mode=public');
         if (!isCurrentAccessFlow(generation)) return;
         showGallery(manifest);
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
         if (sessionCleared) {
-            state.projects = [];
-            state.currentProjectId = null;
-            elements.galleryGrid.replaceChildren();
-            elements.categoryTabs.replaceChildren();
-            elements.galleryShell.hidden = true;
-            elements.entrance.hidden = false;
+            discardProtectedGallery();
             showEntranceChoices();
             elements.entranceStatus.textContent = '보호 콘텐츠는 잠겼지만 공개 포트폴리오를 불러오지 못했습니다. 다시 시도해 주세요.';
         } else {
-            elements.galleryError.textContent = '다시 잠그지 못해 보호 콘텐츠 접근이 아직 활성화되어 있습니다. 다시 시도해 주세요.';
-            elements.galleryError.hidden = false;
+            elements.entranceStatus.textContent = '다시 잠그지 못해 서버 접근이 아직 활성화되어 있습니다. 공개 포트폴리오를 눌러 다시 시도해 주세요.';
         }
     } finally {
         elements.relockButton.disabled = false;
@@ -247,7 +519,10 @@ async function relockPortfolio() {
 
 async function restoreSession() {
     const generation = state.accessFlowGeneration;
-    const preferredMode = sessionStorage.getItem(ACCESS_MODE_KEY);
+    const logoutIntentAtStart = latestLogoutIntentId();
+    const preferredMode = hasActiveLogoutIntent()
+        ? 'public'
+        : readAccessMode();
     const requestedMode = new URLSearchParams(window.location.search).get('mode');
     if (isStaticPublicSite()) {
         if (preferredMode === 'public' || requestedMode === 'public') await enterPublicPortfolio();
@@ -255,24 +530,30 @@ async function restoreSession() {
     }
     try {
         const session = await requestJson('/api/auth/session');
-        if (!isCurrentAccessFlow(generation)) return;
+        if (
+            !isCurrentAccessFlow(generation)
+            || latestLogoutIntentId() !== logoutIntentAtStart
+        ) return;
         if (session.authenticated && preferredMode !== 'public') {
             const manifest = await requestJson('/api/projects');
-            if (!isCurrentAccessFlow(generation)) return;
+            if (
+                !isCurrentAccessFlow(generation)
+                || latestLogoutIntentId() !== logoutIntentAtStart
+            ) return;
             if (manifest.authenticated) {
-                sessionStorage.setItem(ACCESS_MODE_KEY, 'interview');
+                writeAccessMode('interview');
                 showGallery(manifest);
                 return;
             }
         }
-        if (preferredMode === 'public' || requestedMode === 'public') {
-            await enterPublicPortfolio();
-        } else if (requestedMode === 'interview') {
+        if (requestedMode === 'interview') {
             showLoginForm();
+        } else if (preferredMode === 'public' || requestedMode === 'public') {
+            await enterPublicPortfolio();
         }
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
-        sessionStorage.removeItem(ACCESS_MODE_KEY);
+        clearAccessMode();
         if (requestedMode === 'interview') showLoginForm();
     }
 }
@@ -429,7 +710,9 @@ function openViewer(index, source) {
     elements.modalClose.focus();
 }
 
-function closeViewer() {
+function closeViewer({ restoreFocus = true } = {}) {
+    const lastFocusedElement = state.lastFocusedElement;
+    state.lastFocusedElement = null;
     if (elements.detailModal.hidden) return;
     cleanupViewerMedia();
     elements.detailModal.hidden = true;
@@ -439,7 +722,7 @@ function closeViewer() {
     state.touchStartX = null;
     state.touchStartY = null;
     window.clearTimeout(state.viewerInfoTimer);
-    state.lastFocusedElement?.focus();
+    if (restoreFocus) lastFocusedElement?.focus();
 }
 
 function moveViewer(offset) {
@@ -486,13 +769,15 @@ function openContact() {
     requestAnimationFrame(() => elements.contactClose.focus());
 }
 
-function closeContact() {
+function closeContact({ restoreFocus = true } = {}) {
+    const lastFocusedElement = state.contactLastFocusedElement;
+    state.contactLastFocusedElement = null;
     if (elements.contactModal.hidden) return;
     elements.contactModal.hidden = true;
     document.body.classList.remove('body-locked');
     state.contactInertStates.forEach(({ element, inert }) => { element.inert = inert; });
     state.contactInertStates = [];
-    state.contactLastFocusedElement?.focus();
+    if (restoreFocus) lastFocusedElement?.focus();
 }
 
 function handleEntranceClick(event) {
