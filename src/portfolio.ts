@@ -22,6 +22,7 @@ const ROOT_PUBLIC_ASSETS = Object.freeze([
   "dominionion.jpg",
   "dominionion.pdf",
   "index.html",
+  "jin-kim-cover.webp",
   "jin_kim_portfolio.html",
   "portfolio.css",
   "portfolio.js",

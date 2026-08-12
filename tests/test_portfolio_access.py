@@ -61,6 +61,7 @@ def install_static_github_pages(page: Page) -> list[str]:
         ".js": "text/javascript; charset=utf-8",
         ".json": "application/json; charset=utf-8",
         ".jpg": "image/jpeg",
+        ".webp": "image/webp",
         ".mp4": "video/mp4",
         ".pdf": "application/pdf",
     }
@@ -346,21 +347,80 @@ def test_static_github_pages_interview_choice_uses_mac_mini_https(page: Page) ->
     assert all("/api/" not in url and "/protected/" not in url for url in requests)
 
 
-def test_entrance_offers_both_modes_and_interview_form(
+def test_entrance_uses_full_width_attached_artwork_and_exact_identity(
     page: Page, portfolio_url: str
 ) -> None:
     install_guest_api(page)
 
     page.goto(portfolio_url, wait_until="domcontentloaded")
 
-    assert page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).is_visible()
+    image = page.locator("#portfolio-cover")
+    assert image.count() == 1
+    page.wait_for_function(
+        "document.querySelector('#portfolio-cover')?.complete === true"
+    )
+    assert image.evaluate("element => [element.naturalWidth, element.naturalHeight]") == [
+        3808,
+        1087,
+    ]
+    assert image.get_attribute("src") == "./jin-kim-cover.webp"
+    assert page.get_by_role("heading", name="JIN KIM", exact=True).is_visible()
+    assert page.get_by_text("Environment concept artist", exact=True).is_visible()
+
+    viewport = page.viewport_size
+    image_box = image.bounding_box()
+    assert viewport is not None and image_box is not None
+    assert abs(image_box["width"] - viewport["width"]) <= 1
+    assert page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+    )
+
+    key_button = page.get_by_role(
+        "button", name="면접용 전체 포트폴리오", exact=True
+    )
+    assert key_button.is_visible()
+    assert key_button.locator("svg").count() == 1
+    key_box = key_button.bounding_box()
+    icon_box = key_button.locator("svg").bounding_box()
+    assert key_box is not None and icon_box is not None
+    assert key_box["y"] > viewport["height"] * 0.8
+    assert icon_box["width"] <= 16
+
     assert page.get_by_role("button", name="공개 포트폴리오", exact=True).is_visible()
     assert page.locator("#gallery-shell").is_hidden()
+
+
+def test_clicking_anywhere_on_cover_enters_public_portfolio(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+
+    public_hit_area = page.get_by_role("button", name="공개 포트폴리오", exact=True)
+    viewport = page.viewport_size
+    hit_box = public_hit_area.bounding_box()
+    assert viewport is not None and hit_box is not None
+    assert hit_box["x"] == 0
+    assert hit_box["y"] == 0
+    assert abs(hit_box["width"] - viewport["width"]) <= 1
+    assert abs(hit_box["height"] - viewport["height"]) <= 1
+
+    page.mouse.click(20, 20)
+    page.locator("#gallery-shell").wait_for(state="visible")
+    assert page.locator("#access-status").text_content() == "공개 보기"
+
+
+def test_small_key_opens_interview_password_form_without_entering_public_gallery(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
 
     page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
     form = page.get_by_role("form", name="면접용 포트폴리오 로그인")
     assert form.is_visible()
     assert form.get_by_label("비밀번호").get_attribute("type") == "password"
+    assert page.locator("#gallery-shell").is_hidden()
 
 
 def test_interview_query_opens_login_form_on_protected_origin(
@@ -517,6 +577,7 @@ def test_gallery_entry_moves_focus_to_a_real_heading(page: Page, portfolio_url: 
     install_guest_api(page)
     page.goto(portfolio_url, wait_until="domcontentloaded")
     page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.locator("#gallery-shell").wait_for(state="visible")
     heading = page.get_by_role("heading", name="Jin Kim Portfolio", exact=True)
     assert heading.is_visible()
     page.wait_for_function("document.querySelector('#gallery-title') === document.activeElement")

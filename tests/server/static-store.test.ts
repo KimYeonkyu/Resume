@@ -19,6 +19,26 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
+describe("public artwork content types", () => {
+  it("serves the allowlisted WebP cover as image/webp", async () => {
+    const root = await temporaryRoot();
+    const sourcePath = "jin-kim-cover.webp";
+    const expectedBytes = Buffer.from("synthetic WebP cover bytes");
+    await writeFile(path.join(root, sourcePath), expectedBytes);
+    const store = await createPublicAssetStore({
+      allowedPaths: new Set([sourcePath]),
+      mediaVersions: {},
+      root,
+      versionedPaths: new Set(),
+    });
+
+    const response = await store.response(`/${sourcePath}`, "GET");
+    expect(response).not.toBeNull();
+    expect(response!.headers.get("content-type")).toBe("image/webp");
+    expect(Buffer.from(await response!.arrayBuffer())).toEqual(expectedBytes);
+  });
+});
+
 describe("versioned public-media startup validation", () => {
   it("serves unchanged GET and concurrent HEAD requests without request-path content hashing", async () => {
     const root = await temporaryRoot();

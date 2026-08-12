@@ -118,6 +118,7 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
     for required in (
         "index.html",
         "jin_kim_portfolio.html",
+        "jin-kim-cover.webp",
         "portfolio.js",
         "portfolio.css",
         "public-portfolio-manifest.json",
