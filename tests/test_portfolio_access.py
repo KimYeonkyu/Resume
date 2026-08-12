@@ -1339,9 +1339,12 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     calls = install_interview_api(page, configured_password, defer_logout=True)
     instrumented_script = (
         (STATIC_ROOT / "portfolio.js").read_text(encoding="utf-8")
-        + "\nwindow.__getLastFocusedElementForTest = () => state.lastFocusedElement;\n"
+        + "\nwindow.__getSensitiveFocusReferencesForTest = () => ({"
+        + " viewer: state.lastFocusedElement,"
+        + " contact: state.contactLastFocusedElement"
+        + " });\n"
     )
-    page.route(
+    page.context.route(
         "**/portfolio.js",
         lambda route: route.fulfill(
             status=200,
@@ -1361,6 +1364,30 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     page.locator("#detail-modal").wait_for(state="visible")
     assert page.locator("#modal-title").text_content()
 
+    contact_page = page.context.new_page()
+    contact_page.goto(portfolio_url, wait_until="domcontentloaded")
+    contact_page.locator("#gallery-shell").wait_for(state="visible")
+    contact_page.get_by_role("button", name="Project MP", exact=True).click()
+    contact_source = contact_page.locator("#gallery-grid .artwork-card").first
+    contact_source.focus()
+    contact_page.evaluate("() => document.querySelector('#contact-button').click()")
+    contact_page.locator("#contact-modal").wait_for(state="visible")
+    retained_contact_source_before_logout = contact_page.evaluate(
+        """() => {
+            const source = window.__getSensitiveFocusReferencesForTest().contact;
+            return {
+                retained: source !== null,
+                protectedMedia: source?.querySelectorAll(
+                    '[src*="/protected/"], [poster*="/protected/"]'
+                ).length ?? 0,
+            };
+        }"""
+    )
+    assert retained_contact_source_before_logout == {
+        "retained": True,
+        "protectedMedia": 1,
+    }
+
     relock_page = page.context.new_page()
     relock_page.goto(portfolio_url, wait_until="domcontentloaded")
     relock_page.locator("#gallery-shell").wait_for(state="visible")
@@ -1378,18 +1405,29 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     assert len(pending_logout) == 1
 
     page.wait_for_function("() => document.querySelector('#gallery-shell').hidden")
+    contact_page.wait_for_function("() => document.querySelector('#gallery-shell').hidden")
     assert relock_page.locator("#gallery-shell").is_hidden()
     retained_viewer_source = page.evaluate(
         """() => ({
-            retained: window.__getLastFocusedElementForTest() !== null,
-            protectedMedia: window.__getLastFocusedElementForTest()?.querySelectorAll(
+            retained: window.__getSensitiveFocusReferencesForTest().viewer !== null,
+            protectedMedia: window.__getSensitiveFocusReferencesForTest().viewer?.querySelectorAll(
                 '[src*="/protected/"], [poster*="/protected/"]'
             ).length ?? 0,
         })"""
     )
     assert retained_viewer_source == {"retained": False, "protectedMedia": 0}
-    for candidate in (page, relock_page):
+    retained_contact_source = contact_page.evaluate(
+        """() => ({
+            retained: window.__getSensitiveFocusReferencesForTest().contact !== null,
+            protectedMedia: window.__getSensitiveFocusReferencesForTest().contact?.querySelectorAll(
+                '[src*="/protected/"], [poster*="/protected/"]'
+            ).length ?? 0,
+        })"""
+    )
+    assert retained_contact_source == {"retained": False, "protectedMedia": 0}
+    for candidate in (page, contact_page, relock_page):
         assert candidate.locator("#detail-modal").is_hidden()
+        assert candidate.locator("#contact-modal").is_hidden()
         assert candidate.locator(
             '[src*="/protected/"], [poster*="/protected/"]'
         ).count() == 0

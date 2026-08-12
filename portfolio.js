@@ -384,6 +384,7 @@ function showGallery(manifest) {
 }
 
 function discardProtectedGallery() {
+    closeContact({ restoreFocus: false });
     if (elements.detailModal.hidden) cleanupViewerMedia();
     else closeViewer({ restoreFocus: false });
     state.lastFocusedElement = null;
@@ -768,13 +769,15 @@ function openContact() {
     requestAnimationFrame(() => elements.contactClose.focus());
 }
 
-function closeContact() {
+function closeContact({ restoreFocus = true } = {}) {
+    const lastFocusedElement = state.contactLastFocusedElement;
+    state.contactLastFocusedElement = null;
     if (elements.contactModal.hidden) return;
     elements.contactModal.hidden = true;
     document.body.classList.remove('body-locked');
     state.contactInertStates.forEach(({ element, inert }) => { element.inert = inert; });
     state.contactInertStates = [];
-    state.contactLastFocusedElement?.focus();
+    if (restoreFocus) lastFocusedElement?.focus();
 }
 
 function handleEntranceClick(event) {
