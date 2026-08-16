@@ -1,4 +1,5 @@
 import manifest from "../config/portfolio-manifest.json";
+import generatedPublicMediaVersions from "../public-media-versions.json";
 
 type ConfiguredProject = (typeof manifest.projects)[number];
 type ConfiguredItem = ConfiguredProject["items"][number];
@@ -21,6 +22,7 @@ const ROOT_PUBLIC_ASSETS = Object.freeze([
   "dominionion.jpg",
   "dominionion.pdf",
   "index.html",
+  "jin-kim-cover.webp",
   "jin_kim_portfolio.html",
   "portfolio.css",
   "portfolio.js",
@@ -29,8 +31,16 @@ const ROOT_PUBLIC_ASSETS = Object.freeze([
   "개인작.pdf",
 ]);
 
+const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
+const publicMediaVersions: Readonly<Record<string, unknown>> = generatedPublicMediaVersions;
+
 function publicAssetUrl(sourcePath: string): string {
-  return `/${sourcePath.split("/").map(encodeURIComponent).join("/")}`;
+  const version = publicMediaVersions[sourcePath];
+  if (typeof version !== "string" || !SHA256_PATTERN.test(version)) {
+    throw new Error(`Public media asset lacks a generated SHA-256 version: ${sourcePath}`);
+  }
+  const encodedPath = sourcePath.split("/").map(encodeURIComponent).join("/");
+  return `/${encodedPath}?v=${version}`;
 }
 
 function itemIsProtected(project: ConfiguredProject, item: ConfiguredItem): boolean {
@@ -101,6 +111,12 @@ export function findProtectedItem(routeId: string): ProtectedItem | undefined {
 
 export function publicRuntimeAssetPaths(): ReadonlySet<string> {
   const paths = new Set<string>(ROOT_PUBLIC_ASSETS);
+  for (const sourcePath of publicRuntimeMediaPaths()) paths.add(sourcePath);
+  return paths;
+}
+
+export function publicRuntimeMediaPaths(): ReadonlySet<string> {
+  const paths = new Set<string>();
   for (const project of manifest.projects) {
     for (const item of project.items) {
       if (itemIsProtected(project, item)) continue;
@@ -109,6 +125,10 @@ export function publicRuntimeAssetPaths(): ReadonlySet<string> {
     }
   }
   return paths;
+}
+
+export function publicRuntimeMediaVersions(): Readonly<Record<string, unknown>> {
+  return publicMediaVersions;
 }
 
 export function isLegacyProtectedPath(pathname: string): boolean {

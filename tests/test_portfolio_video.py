@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import functools
+import hashlib
 import json
 import threading
 from collections.abc import Iterator
@@ -18,6 +19,8 @@ STATIC_ROOT = REPO_ROOT / "dist"
 PORTFOLIO_PATH = "/jin_kim_portfolio.html"
 VIDEO_PATH = "/%EB%91%90%EB%AF%B8%EB%8B%88%EC%96%B4%EB%8B%88%EC%96%B8/DoMiniOnion_Trailer.mp4"
 POSTER_PATH = "/%EB%91%90%EB%AF%B8%EB%8B%88%EC%96%B4%EB%8B%88%EC%96%B8/DoMiniOnion_Trailer_poster.jpg"
+VIDEO_SOURCE_PATH = "두미니어니언/DoMiniOnion_Trailer.mp4"
+POSTER_SOURCE_PATH = "두미니어니언/DoMiniOnion_Trailer_poster.jpg"
 CONFIGURATION = json.loads(
     (REPO_ROOT / "config" / "portfolio-manifest.json").read_text(encoding="utf-8")
 )
@@ -55,7 +58,12 @@ def page() -> Iterator[Page]:
 
 
 def asset_url(source_path: str) -> str:
-    return "/" + "/".join(quote(segment, safe="") for segment in source_path.split("/"))
+    encoded = "/".join(quote(segment, safe="") for segment in source_path.split("/"))
+    return f"/{encoded}?v={asset_version(source_path)}"
+
+
+def asset_version(source_path: str) -> str:
+    return hashlib.sha256((REPO_ROOT / source_path).read_bytes()).hexdigest()
 
 
 def public_manifest() -> dict[str, object]:
@@ -122,7 +130,7 @@ def install_public_api(page: Page) -> None:
 def enter_public(page: Page, portfolio_url: str) -> None:
     install_public_api(page)
     page.goto(portfolio_url, wait_until="domcontentloaded")
-    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
 
@@ -167,7 +175,13 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     thumbnail = cards.locator("video")
     assert thumbnail.count() == 1
     assert thumbnail.evaluate("video => new URL(video.src).pathname") == VIDEO_PATH
+    assert thumbnail.evaluate("video => new URL(video.src).searchParams.get('v')") == asset_version(
+        VIDEO_SOURCE_PATH
+    )
     assert thumbnail.evaluate("video => new URL(video.poster).pathname") == POSTER_PATH
+    assert thumbnail.evaluate(
+        "video => new URL(video.poster).searchParams.get('v')"
+    ) == asset_version(POSTER_SOURCE_PATH)
     assert thumbnail.get_attribute("preload") == "none"
     assert thumbnail.evaluate("video => video.muted && video.playsInline")
     frame_box = cards.first.locator(".artwork-frame").bounding_box()
@@ -182,7 +196,13 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     trailer = modal.locator("video[controls]")
     assert trailer.count() == 1
     assert trailer.evaluate("video => new URL(video.src).pathname") == VIDEO_PATH
+    assert trailer.evaluate("video => new URL(video.src).searchParams.get('v')") == asset_version(
+        VIDEO_SOURCE_PATH
+    )
     assert trailer.evaluate("video => new URL(video.poster).pathname") == POSTER_PATH
+    assert trailer.evaluate(
+        "video => new URL(video.poster).searchParams.get('v')"
+    ) == asset_version(POSTER_SOURCE_PATH)
     assert trailer.evaluate("video => video.playsInline")
 
     trailer.evaluate(
@@ -202,7 +222,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 17, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 19, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,
@@ -226,15 +246,26 @@ def test_existing_public_image_categories_still_load(
     locked_cards = page.locator('#gallery-grid [data-locked="true"]')
     assert images.count() == expected_image_count
     assert locked_cards.count() == expected_locked_count
-    if category == "개인작":
-        personal_paths = images.evaluate_all(
-            "nodes => nodes.map(image => decodeURIComponent(new URL(image.src).pathname))"
-        )
-        assert personal_paths[-3:] == [
-            "/개인작/15.jpg",
-            "/개인작/15-1.jpg",
-            "/개인작/16.jpg",
-        ]
+    configured_project = next(
+        project for project in CONFIGURATION["projects"] if project["title"] == category
+    )
+    public_items = [
+        item
+        for item in configured_project["items"]
+        if not (configured_project["protected"] or item.get("protected", False))
+    ]
+    rendered_urls = images.evaluate_all(
+        """nodes => nodes.map(image => ({
+            path: decodeURIComponent(new URL(image.src).pathname),
+            version: new URL(image.src).searchParams.get('v'),
+        }))"""
+    )
+    assert [rendered["path"] for rendered in rendered_urls] == [
+        f"/{item['sourcePath']}" for item in public_items
+    ]
+    assert [rendered["version"] for rendered in rendered_urls] == [
+        asset_version(item["sourcePath"]) for item in public_items
+    ]
     images.evaluate_all("nodes => nodes.forEach(image => image.loading = 'eager')")
     page.wait_for_function(
         "() => [...document.querySelectorAll('#gallery-grid img')].every(image => image.complete)",
@@ -244,6 +275,18 @@ def test_existing_public_image_categories_still_load(
     frame_box = page.locator("#gallery-grid .artwork-frame").first.bounding_box()
     assert frame_box is not None
     assert frame_box["width"] / frame_box["height"] == pytest.approx(1.6, abs=0.03)
+    if category == "개인작":
+        personal_16 = page.locator("#gallery-grid > button").nth(15)
+        personal_16.click()
+        assert page.locator("#modal-title").text_content() == "16"
+        detail = page.locator("#modal-media-container img")
+        assert detail.evaluate("image => decodeURIComponent(new URL(image.src).pathname)") == (
+            "/개인작/16.jpg"
+        )
+        assert detail.evaluate("image => new URL(image.src).searchParams.get('v')") == asset_version(
+            "개인작/16.jpg"
+        )
+        page.locator("#modal-close-button").click()
     assert failed_responses == []
 
 
@@ -260,9 +303,15 @@ def test_viewer_keyboard_swipe_focus_trap_and_focus_restore(
     assert modal.get_attribute("aria-labelledby") == "modal-title"
     assert page.locator("#modal-close-button").evaluate("element => element === document.activeElement")
     assert page.locator("#modal-title").text_content() == "1"
+    assert page.locator("#modal-media-container img").evaluate(
+        "image => new URL(image.src).searchParams.get('v')"
+    ) == asset_version("개인작/1.jpg")
 
     page.keyboard.press("ArrowRight")
     assert page.locator("#modal-title").text_content() == "2"
+    assert page.locator("#modal-media-container img").evaluate(
+        "image => new URL(image.src).searchParams.get('v')"
+    ) == asset_version("개인작/2.jpg")
     page.keyboard.press("ArrowLeft")
     assert page.locator("#modal-title").text_content() == "1"
 
@@ -329,7 +378,7 @@ def test_entrance_gallery_and_video_viewer_have_no_horizontal_overflow(
     page.get_by_role("button", name="면접용 전체 포트폴리오", exact=True).click()
     assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
     page.get_by_role("button", name="선택으로 돌아가기", exact=True).click()
-    page.get_by_role("button", name="공개 포트폴리오", exact=True).click()
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
 

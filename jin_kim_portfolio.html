@@ -11,25 +11,35 @@
 </head>
 <body>
     <section id="entrance-screen" class="entrance" aria-labelledby="entrance-title">
-        <div class="entrance-card">
-            <div class="monogram" aria-hidden="true">JK</div>
-            <p class="eyebrow">Environment Concept Artist</p>
-            <h1 id="entrance-title">Jin Kim Portfolio</h1>
-            <p class="entrance-copy">열람 목적에 맞는 포트폴리오를 선택해 주세요.</p>
-
-            <div id="entrance-actions" class="entrance-actions">
-                <button id="interview-choice" class="choice choice-primary" type="button" aria-label="면접용 전체 포트폴리오">
-                    <span>면접용 전체 포트폴리오</span>
-                    <small>인증 후 비공개 프로젝트 포함</small>
-                </button>
-                <button id="public-choice" class="choice" type="button" aria-label="공개 포트폴리오">
-                    <span>공개 포트폴리오</span>
-                    <small>공개 작품만 둘러보기</small>
-                </button>
+        <div class="entrance-visual">
+            <img
+                id="portfolio-cover"
+                class="entrance-cover"
+                src="./jin-kim-cover.webp"
+                width="3808"
+                height="1087"
+                alt="절벽과 계단 사이로 흰 바위 건축물이 펼쳐진 환경 콘셉트 아트"
+            >
+            <div class="entrance-identity">
+                <h1 id="entrance-title">JIN KIM</h1>
+                <p>Environment concept artist</p>
             </div>
-            <p id="entrance-status" class="form-message" role="alert" aria-live="assertive"></p>
+        </div>
 
-            <form id="login-form" class="login-form" aria-label="면접용 포트폴리오 로그인" hidden>
+        <div id="entrance-actions" class="entrance-actions">
+            <button id="public-choice" class="entrance-public-hit-area" type="button" aria-label="공개 포트폴리오">
+                <span class="sr-only">공개 포트폴리오</span>
+            </button>
+            <button id="interview-choice" class="interview-key" type="button" aria-label="면접용 전체 포트폴리오">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M15.1 7.2a5 5 0 1 0-4.3 7.5l1.7 1.7v2.1H15v2h2.5V18H20v-2.5l-5.3-5.3a5 5 0 0 0 .4-3ZM7.5 10A2.5 2.5 0 1 1 10 7.5 2.5 2.5 0 0 1 7.5 10Z"/>
+                </svg>
+            </button>
+        </div>
+        <p id="entrance-status" class="entrance-status form-message" role="alert" aria-live="assertive"></p>
+
+        <form id="login-form" class="login-form" aria-label="면접용 포트폴리오 로그인" hidden>
+            <div class="login-card">
                 <button id="login-back" class="text-button login-back" type="button">선택으로 돌아가기</button>
                 <label for="password-input">비밀번호</label>
                 <div class="password-row">
@@ -37,8 +47,8 @@
                     <button class="submit-button" type="submit">확인</button>
                 </div>
                 <p id="login-error" class="form-message" role="alert" aria-live="polite"></p>
-            </form>
-        </div>
+            </div>
+        </form>
     </section>
 
     <div id="gallery-shell" class="site-shell" hidden>

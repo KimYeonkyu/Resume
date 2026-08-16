@@ -4,12 +4,27 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expectedPublicFiles } from "./public-build-policy.mjs";
+import {
+  publicMediaSourcePaths,
+  validatePublicMediaRoot,
+  validatePublicMediaVersionMap,
+} from "./public-manifest.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(repositoryRoot, "dist");
 const manifest = JSON.parse(
   await readFile(path.join(repositoryRoot, "config", "portfolio-manifest.json"), "utf8"),
 );
+const publicMediaVersions = JSON.parse(
+  await readFile(path.join(repositoryRoot, "public-media-versions.json"), "utf8"),
+);
+const publicSourcePaths = publicMediaSourcePaths(manifest);
+validatePublicMediaVersionMap(publicSourcePaths, publicMediaVersions);
+await validatePublicMediaRoot({
+  mediaVersions: publicMediaVersions,
+  root: distDirectory,
+  sourcePaths: publicSourcePaths,
+});
 
 async function walk(directory) {
   const results = [];

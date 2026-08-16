@@ -3,12 +3,18 @@ import { lstat, open, readdir, realpath, type FileHandle } from "node:fs/promise
 import path from "node:path";
 import { Readable } from "node:stream";
 
+import {
+  type PublicMediaFileSnapshot,
+  validatePublicMediaRoot,
+} from "../scripts/public-manifest.mjs";
+
 export interface PublicAssetStore {
   response(rawPathname: string, method: "GET" | "HEAD"): Promise<Response | null>;
 }
 
 interface PublicAsset {
   contentType: string;
+  snapshot?: PublicMediaFileSnapshot;
   source: string;
 }
 
@@ -19,6 +25,7 @@ const CONTENT_TYPES = new Map([
   [".json", "application/json; charset=utf-8"],
   [".jpg", "image/jpeg"],
   [".jpeg", "image/jpeg"],
+  [".webp", "image/webp"],
   [".mp4", "video/mp4"],
   [".pdf", "application/pdf"],
 ]);
@@ -85,6 +92,29 @@ function requestAssetPath(rawPathname: string): string | null {
   return segments.join("/");
 }
 
+function sameFileSnapshot(
+  left: PublicMediaFileSnapshot,
+  right: PublicMediaFileSnapshot,
+): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.mtimeNs === right.mtimeNs &&
+    left.ctimeNs === right.ctimeNs &&
+    left.birthtimeNs === right.birthtimeNs
+  );
+}
+
+function safeFileSize(size: bigint): number {
+  if (size < 0n || size > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error("Public asset size is unsupported");
+  }
+  return Number(size);
+}
+
 async function openPinnedFile(root: string, source: string): Promise<{ handle: FileHandle; size: number }> {
   const info = await lstat(source);
   if (!info.isFile() || info.isSymbolicLink()) throw new Error("Public asset changed type");
@@ -104,10 +134,41 @@ async function openPinnedFile(root: string, source: string): Promise<{ handle: F
   }
 }
 
+async function openVersionedFile(
+  root: string,
+  source: string,
+  expectedSnapshot: PublicMediaFileSnapshot,
+): Promise<{ handle: FileHandle; size: number }> {
+  const currentInfo = await lstat(source, { bigint: true });
+  if (!currentInfo.isFile() || currentInfo.isSymbolicLink()) {
+    throw new Error("Versioned public media bytes changed type after startup validation");
+  }
+  const resolved = await realpath(source);
+  if (!inside(root, resolved)) throw new Error("Versioned public media resolves outside its root");
+  const noFollow = "O_NOFOLLOW" in constants ? constants.O_NOFOLLOW : 0;
+  const handle = await open(resolved, constants.O_RDONLY | noFollow);
+  try {
+    const openedInfo = await handle.stat({ bigint: true });
+    if (
+      !openedInfo.isFile() ||
+      !sameFileSnapshot(currentInfo, openedInfo) ||
+      !sameFileSnapshot(openedInfo, expectedSnapshot)
+    ) {
+      throw new Error("Versioned public media bytes changed from their startup-validated snapshot");
+    }
+    return { handle, size: safeFileSize(openedInfo.size) };
+  } catch (error) {
+    await handle.close().catch(() => undefined);
+    throw error;
+  }
+}
+
 export async function createPublicAssetStore(options: {
   allowedPaths: ReadonlySet<string>;
   ignoredPaths?: ReadonlySet<string>;
+  mediaVersions: Readonly<Record<string, unknown>>;
   root: string;
+  versionedPaths: ReadonlySet<string>;
 }): Promise<PublicAssetStore> {
   if (!path.isAbsolute(options.root)) throw new Error("Public asset root must be absolute");
   const rootInfo = await lstat(options.root);
@@ -115,6 +176,16 @@ export async function createPublicAssetStore(options: {
     throw new Error("Public asset root must be a real directory, not a symlink");
   }
   const resolvedRoot = await realpath(options.root);
+  for (const versionedPath of options.versionedPaths) {
+    if (!options.allowedPaths.has(versionedPath)) {
+      throw new Error(`Versioned public media is not allowlisted: ${versionedPath}`);
+    }
+  }
+  const validatedSnapshots = await validatePublicMediaRoot({
+    mediaVersions: options.mediaVersions,
+    root: resolvedRoot,
+    sourcePaths: options.versionedPaths,
+  });
   const ignored = options.ignoredPaths ?? new Set([".assetsignore"]);
   const actualPaths = new Set(await walk(resolvedRoot));
   const assets = new Map<string, PublicAsset>();
@@ -134,12 +205,23 @@ export async function createPublicAssetStore(options: {
     if (!inside(resolvedRoot, resolvedSource)) throw new Error("Public asset resolves outside its root");
     const contentType = CONTENT_TYPES.get(path.extname(relativePath).toLowerCase());
     if (!contentType) throw new Error(`Public asset has an unsupported extension: ${relativePath}`);
-    assets.set(relativePath, { contentType, source: resolvedSource });
+    const snapshot = options.versionedPaths.has(relativePath)
+      ? validatedSnapshots.get(relativePath)
+      : undefined;
+    if (options.versionedPaths.has(relativePath) && !snapshot) {
+      throw new Error(`Versioned public media lacks a startup snapshot: ${relativePath}`);
+    }
+    assets.set(relativePath, { contentType, snapshot, source: resolvedSource });
   }
   for (const actualPath of actualPaths) {
     if (!assets.has(actualPath) && !ignored.has(actualPath)) {
       throw new Error(`Public build contains an unexpected file: ${actualPath}`);
     }
+  }
+  for (const asset of assets.values()) {
+    if (!asset.snapshot) continue;
+    const opened = await openVersionedFile(resolvedRoot, asset.source, asset.snapshot);
+    await opened.handle.close();
   }
 
   return {
@@ -148,21 +230,29 @@ export async function createPublicAssetStore(options: {
       if (!assetPath) return null;
       const asset = assets.get(assetPath);
       if (!asset) return null;
-      const opened = await openPinnedFile(resolvedRoot, asset.source);
-      const headers = new Headers({
-        "Cache-Control": assetPath.endsWith(".html") ? "no-cache" : "public, max-age=3600",
-        "Content-Length": String(opened.size),
-        "Content-Type": asset.contentType,
-      });
-      if (method === "HEAD") {
-        await opened.handle.close();
-        return new Response(null, { status: 200, headers });
+      const opened = asset.snapshot
+        ? await openVersionedFile(resolvedRoot, asset.source, asset.snapshot)
+        : await openPinnedFile(resolvedRoot, asset.source);
+      try {
+        const headers = new Headers({
+          "Cache-Control": assetPath.endsWith(".html") ? "no-cache" : "public, max-age=3600",
+          "Content-Length": String(opened.size),
+          "Content-Type": asset.contentType,
+        });
+        if (method === "HEAD") {
+          await opened.handle.close();
+          return new Response(null, { status: 200, headers });
+        }
+        // The public root is controlled; privileged writes racing this check and the stream are out of scope.
+        const nodeStream = opened.handle.createReadStream({ autoClose: true, start: 0 });
+        return new Response(Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>, {
+          status: 200,
+          headers,
+        });
+      } catch (error) {
+        await opened.handle.close().catch(() => undefined);
+        throw error;
       }
-      const nodeStream = opened.handle.createReadStream({ autoClose: true, start: 0 });
-      return new Response(Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>, {
-        status: 200,
-        headers,
-      });
     },
   };
 }

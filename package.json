@@ -9,7 +9,7 @@
   "scripts": {
     "build": "npm run build:public && npm run build:server",
     "build:public": "npm run manifest:check && node scripts/build.mjs",
-    "build:server": "node scripts/build-server.mjs",
+    "build:server": "npm run manifest:check && node scripts/build-server.mjs",
     "manifest:public": "node scripts/generate-public-manifest.mjs",
     "manifest:check": "node scripts/generate-public-manifest.mjs --check",
     "check:dist": "node scripts/check-dist.mjs",
