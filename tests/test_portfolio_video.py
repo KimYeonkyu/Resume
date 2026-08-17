@@ -222,7 +222,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 19, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 20, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,
@@ -285,6 +285,18 @@ def test_existing_public_image_categories_still_load(
         )
         assert detail.evaluate("image => new URL(image.src).searchParams.get('v')") == asset_version(
             "개인작/16.jpg"
+        )
+        page.locator("#modal-close-button").click()
+
+        personal_18 = page.locator("#gallery-grid > button").nth(17)
+        personal_18.click()
+        assert page.locator("#modal-title").text_content() == "18"
+        detail = page.locator("#modal-media-container img")
+        assert detail.evaluate("image => decodeURIComponent(new URL(image.src).pathname)") == (
+            "/개인작/18.jpg"
+        )
+        assert detail.evaluate("image => new URL(image.src).searchParams.get('v')") == asset_version(
+            "개인작/18.jpg"
         )
         page.locator("#modal-close-button").click()
     assert failed_responses == []
