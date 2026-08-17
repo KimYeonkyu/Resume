@@ -6,7 +6,7 @@
       "title": "개인작",
       "protected": false,
       "locked": false,
-      "itemCount": 19,
+      "itemCount": 20,
       "items": [
         {
           "id": "personal-01",
@@ -143,6 +143,14 @@
           "type": "image",
           "description": "개인작 · 17",
           "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/17.jpg?v=955799f5c177153503f1d46a6b556e65da136c6aec8f0f373b9d6520952f61a2"
+        },
+        {
+          "id": "personal-18",
+          "title": "18",
+          "category": "개인작",
+          "type": "image",
+          "description": "개인작 · 18",
+          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/18.jpg?v=efa812879cd3eea16c3e08cf69ffff46c6c9a470dfb720e50ec6d5fb035c7772"
         },
         {
           "id": "personal-20",
