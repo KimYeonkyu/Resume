@@ -1450,7 +1450,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
         + " });\n"
     )
     page.context.route(
-        "**/portfolio.js",
+        "**/portfolio.js*",
         lambda route: route.fulfill(
             status=200,
             content_type="text/javascript; charset=utf-8",
