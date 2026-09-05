@@ -24,6 +24,7 @@ SESSION_MUTATION_TIMEOUT_MS = 10_000
 SESSION_LOCK_WAIT_TIMEOUT_MS = 30_000
 SESSION_INTENT_STORAGE_KEY = "jin-kim-portfolio-session-intent"
 SESSION_INTENT_CHANNEL_NAME = "jin-kim-portfolio-session-intent"
+ACCESS_MODE_KEY = "portfolio-access-mode"
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -414,6 +415,38 @@ def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: 
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
 
 
+def test_bare_url_always_returns_to_entrance_after_public_selection(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+
+    assert page.locator("#entrance-screen").is_visible()
+    assert page.get_by_role("button", name="공개 포트폴리오", exact=True).is_visible()
+    assert page.locator("#gallery-shell").is_hidden()
+    assert page.evaluate("key => sessionStorage.getItem(key)", ACCESS_MODE_KEY) is None
+
+
+def test_bfcache_restore_of_bare_url_returns_to_entrance(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    page.evaluate(
+        "dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))"
+    )
+
+    assert page.locator("#entrance-screen").is_visible()
+    assert page.locator("#gallery-shell").is_hidden()
+
+
 def test_static_github_pages_interview_choice_uses_mac_mini_https(page: Page) -> None:
     requests = install_static_github_pages(page)
     destination = "https://minionion.duckdns.org/jin_kim_portfolio.html?mode=interview"
@@ -431,6 +464,24 @@ def test_static_github_pages_interview_choice_uses_mac_mini_https(page: Page) ->
 
     assert page.url == destination
     assert all("/api/" not in url and "/protected/" not in url for url in requests)
+
+
+def test_static_interview_query_ignores_persisted_logout_intent(page: Page) -> None:
+    requests = install_static_github_pages(page)
+    page.add_init_script(
+        f"localStorage.setItem({json.dumps(SESSION_INTENT_STORAGE_KEY)}, "
+        f"{json.dumps(json.dumps({'kind': 'logout', 'id': 'a' * 16}))})"
+    )
+
+    page.goto(
+        "https://kimyeonkyu.github.io/Resume/jin_kim_portfolio.html?mode=interview",
+        wait_until="load",
+    )
+    page.wait_for_timeout(100)
+
+    assert page.locator("#entrance-screen").is_visible()
+    assert page.locator("#gallery-shell").is_hidden()
+    assert all("public-portfolio-manifest.json" not in url for url in requests)
 
 
 def test_entrance_uses_full_width_attached_artwork_and_exact_identity(
@@ -684,6 +735,54 @@ def test_interview_query_opens_login_form_on_protected_origin(
     expect(form.get_by_label("비밀번호")).to_be_focused()
 
 
+def test_public_query_overrides_authenticated_interview_mode(
+    page: Page, portfolio_url: str
+) -> None:
+    calls = install_interview_api(page, secrets.token_urlsafe(32))
+    origin = portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]
+    session_value = calls["session_value"]
+    assert isinstance(session_value, str)
+    page.context.add_cookies(
+        [{"name": "browser_session", "value": session_value, "url": origin}]
+    )
+    page.add_init_script(
+        f"sessionStorage.setItem({json.dumps(ACCESS_MODE_KEY)}, 'interview')"
+    )
+
+    page.goto(f"{portfolio_url}?mode=public", wait_until="domcontentloaded")
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    assert page.locator("#access-status").text_content() == "공개 보기"
+    page.get_by_role("button", name="Project MP", exact=True).click()
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
+    assert calls["projects_authenticated"] == 0
+
+
+def test_interview_query_overrides_persisted_public_mode(
+    page: Page, portfolio_url: str
+) -> None:
+    calls = install_interview_api(page, secrets.token_urlsafe(32))
+    origin = portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]
+    session_value = calls["session_value"]
+    assert isinstance(session_value, str)
+    page.context.add_cookies(
+        [{"name": "browser_session", "value": session_value, "url": origin}]
+    )
+    page.add_init_script(
+        f"sessionStorage.setItem({json.dumps(ACCESS_MODE_KEY)}, 'public')"
+    )
+
+    page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
+    page.wait_for_function(
+        "!document.querySelector('#gallery-shell').hidden || !document.querySelector('#login-form').hidden"
+    )
+
+    assert page.locator("#gallery-shell").is_visible()
+    assert page.locator("#login-form").is_hidden()
+    assert page.locator("#access-status").text_content() == "면접용 전체 보기"
+    assert calls["projects_authenticated"] == 1
+
+
 def test_guest_protected_categories_are_dark_locked_and_request_no_media(
     page: Page, portfolio_url: str
 ) -> None:
@@ -749,7 +848,7 @@ def test_interview_form_enter_unlocks_both_projects_once(
     assert calls["login"] == 1
 
 
-def test_authenticated_refresh_restores_access_without_another_login(
+def test_authenticated_bare_refresh_returns_to_entrance_and_explicit_interview_restores(
     page: Page, portfolio_url: str
 ) -> None:
     configured_password = secrets.token_urlsafe(32)
@@ -761,6 +860,12 @@ def test_authenticated_refresh_restores_access_without_another_login(
     page.locator("#gallery-shell").wait_for(state="visible")
 
     page.reload(wait_until="domcontentloaded")
+
+    assert page.locator("#entrance-screen").is_visible()
+    assert page.locator("#gallery-shell").is_hidden()
+    assert page.evaluate("key => sessionStorage.getItem(key)", ACCESS_MODE_KEY) is None
+
+    page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
 
     page.locator("#gallery-shell").wait_for(state="visible")
     assert page.locator("#entrance-screen").is_hidden()
@@ -1365,7 +1470,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     assert page.locator("#modal-title").text_content()
 
     contact_page = page.context.new_page()
-    contact_page.goto(portfolio_url, wait_until="domcontentloaded")
+    contact_page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     contact_page.locator("#gallery-shell").wait_for(state="visible")
     contact_page.get_by_role("button", name="Project MP", exact=True).click()
     contact_source = contact_page.locator("#gallery-grid .artwork-card").first
@@ -1389,7 +1494,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     }
 
     relock_page = page.context.new_page()
-    relock_page.goto(portfolio_url, wait_until="domcontentloaded")
+    relock_page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     relock_page.locator("#gallery-shell").wait_for(state="visible")
     relock_page.get_by_role("button", name="Project MP", exact=True).click()
     assert relock_page.locator('[src*="/protected/"]').count() == 6
@@ -1531,7 +1636,7 @@ def test_rejected_session_mutation_releases_lock_for_next_login(
     assert calls["login"] == 1
     assert page.locator("#access-status").text_content() == "면접용 전체 보기"
 
-    page.reload(wait_until="domcontentloaded")
+    page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     page.locator("#gallery-shell").wait_for(state="visible")
     assert page.locator("#access-status").text_content() == "면접용 전체 보기"
 
