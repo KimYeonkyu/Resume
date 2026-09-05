@@ -93,9 +93,9 @@ def test_personal_manifest_matches_repository_image_identity_and_natural_order()
         assert item["id"] == f"personal-{int(source_stem):02d}"
 
 
-def test_personal_19_and_20_artwork_files_are_swapped() -> None:
+def test_personal_19_and_20_artwork_files_match_approved_versions() -> None:
     expected_digests = {
-        "개인작/19.jpg": "2c455029f9d5182e79985fd3acedd49e5af234923128db11fb09c243cac86ae0",
+        "개인작/19.jpg": "0b069b732553e320fb3a1fbb7cc9842fa94b1df451a5bc9ce65fda141b558c61",
         "개인작/20.jpg": "eb7a70cce16f1be0855ff542a7828a7090124a49793ba610f3cddf3d9b5589ff",
     }
 
