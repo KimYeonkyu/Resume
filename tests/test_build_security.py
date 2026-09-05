@@ -93,6 +93,20 @@ def test_personal_manifest_matches_repository_image_identity_and_natural_order()
         assert item["id"] == f"personal-{int(source_stem):02d}"
 
 
+def test_personal_19_and_20_artwork_files_are_swapped() -> None:
+    expected_digests = {
+        "개인작/19.jpg": "2c455029f9d5182e79985fd3acedd49e5af234923128db11fb09c243cac86ae0",
+        "개인작/20.jpg": "eb7a70cce16f1be0855ff542a7828a7090124a49793ba610f3cddf3d9b5589ff",
+    }
+
+    actual_digests = {
+        relative_path: hashlib.sha256((REPO_ROOT / relative_path).read_bytes()).hexdigest()
+        for relative_path in expected_digests
+    }
+
+    assert actual_digests == expected_digests
+
+
 def combined_public_text() -> str:
     return "\n".join(
         path.read_text(encoding="utf-8")
