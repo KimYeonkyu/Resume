@@ -6,7 +6,7 @@
       "title": "개인작",
       "protected": false,
       "locked": false,
-      "itemCount": 21,
+      "itemCount": 22,
       "items": [
         {
           "id": "personal-01",
@@ -158,7 +158,7 @@
           "category": "개인작",
           "type": "image",
           "description": "개인작 · 19",
-          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/19.jpg?v=96aa32e592aba253ee6caf3db7806f0a3ca7be112990665ef020197b614f88d8"
+          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/19.jpg?v=eb7a70cce16f1be0855ff542a7828a7090124a49793ba610f3cddf3d9b5589ff"
         },
         {
           "id": "personal-20",
@@ -166,7 +166,7 @@
           "category": "개인작",
           "type": "image",
           "description": "개인작 · 20",
-          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/20.jpg?v=6deb63154959cb7250b21e09480787e535ca50ecde4f094f0e1e430cc37bce8f"
+          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/20.jpg?v=2c455029f9d5182e79985fd3acedd49e5af234923128db11fb09c243cac86ae0"
         },
         {
           "id": "personal-21",
@@ -174,7 +174,15 @@
           "category": "개인작",
           "type": "image",
           "description": "개인작 · 21",
-          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/21.jpg?v=b5cb745050e971bcb58e9cf540fe71c282cad4f21aed4df18ff62a9312a11df3"
+          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/21.jpg?v=6deb63154959cb7250b21e09480787e535ca50ecde4f094f0e1e430cc37bce8f"
+        },
+        {
+          "id": "personal-22",
+          "title": "22",
+          "category": "개인작",
+          "type": "image",
+          "description": "개인작 · 22",
+          "url": "%EA%B0%9C%EC%9D%B8%EC%9E%91/22.jpg?v=b5cb745050e971bcb58e9cf540fe71c282cad4f21aed4df18ff62a9312a11df3"
         }
       ]
     },
