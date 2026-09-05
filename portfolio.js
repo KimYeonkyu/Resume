@@ -157,28 +157,17 @@ function makeSessionIntentId() {
     return [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
-function readAccessMode() {
-    try {
-        return sessionStorage.getItem(ACCESS_MODE_KEY);
-    } catch {
-        return null;
-    }
-}
-
-function writeAccessMode(mode) {
-    try {
-        sessionStorage.setItem(ACCESS_MODE_KEY, mode);
-    } catch {
-        // In-memory generation and DOM purging remain fail-closed.
-    }
-}
-
 function clearAccessMode() {
     try {
         sessionStorage.removeItem(ACCESS_MODE_KEY);
     } catch {
         // No persisted mode is required for the current document.
     }
+}
+
+function requestedAccessMode() {
+    const mode = new URLSearchParams(window.location.search).get('mode');
+    return mode === 'public' || mode === 'interview' ? mode : null;
 }
 
 function persistSessionIntent(intent) {
@@ -218,13 +207,11 @@ function applyRemoteSessionIntent(intent, requirePersistedMatch = true) {
     state.sessionIntentStorageFallback = !requirePersistedMatch;
     if (intent.kind === 'login') return;
     beginAccessFlow({ local: false });
-    writeAccessMode('public');
     discardProtectedGallery();
     elements.entranceStatus.textContent = '다른 창의 요청으로 보호 콘텐츠를 화면에서 제거했습니다.';
 }
 
 function publishLogoutIntent(intent) {
-    writeAccessMode('public');
     discardProtectedGallery();
     elements.entranceStatus.textContent = '보호 콘텐츠를 화면에서 제거하고 서버 잠금을 처리 중입니다.';
     commitSessionIntent(intent);
@@ -323,7 +310,6 @@ function showEntranceChoices() {
 
 async function enterPublicPortfolio() {
     const generation = beginAccessFlow();
-    writeAccessMode('public');
     elements.publicChoice.disabled = true;
     elements.entranceStatus.textContent = '';
     try {
@@ -464,7 +450,6 @@ async function submitLogin(event) {
             || latestLogoutIntentId() !== logoutIntentAtSubmission
         ) return;
         if (!manifest.authenticated) throw new Error('Session was not established');
-        writeAccessMode('interview');
         showGallery(manifest);
     } catch {
         if (!isCurrentAccessFlow(generation)) return;
@@ -498,7 +483,6 @@ async function relockPortfolio() {
         if (!response.ok) throw new Error('Logout failed');
         if (!isCurrentAccessFlow(generation)) return;
         sessionCleared = true;
-        writeAccessMode('public');
         discardProtectedGallery();
         const manifest = await requestJson('/api/projects?mode=public');
         if (!isCurrentAccessFlow(generation)) return;
@@ -518,16 +502,20 @@ async function relockPortfolio() {
 }
 
 async function restoreSession() {
+    const requestedMode = requestedAccessMode();
+    if (!requestedMode) {
+        clearAccessMode();
+        return;
+    }
+    if (isStaticPublicSite()) {
+        if (requestedMode === 'public') await enterPublicPortfolio();
+        return;
+    }
     const generation = state.accessFlowGeneration;
     const logoutIntentAtStart = latestLogoutIntentId();
     const preferredMode = hasActiveLogoutIntent()
         ? 'public'
-        : readAccessMode();
-    const requestedMode = new URLSearchParams(window.location.search).get('mode');
-    if (isStaticPublicSite()) {
-        if (preferredMode === 'public' || requestedMode === 'public') await enterPublicPortfolio();
-        return;
-    }
+        : requestedMode;
     try {
         const session = await requestJson('/api/auth/session');
         if (
@@ -541,7 +529,6 @@ async function restoreSession() {
                 || latestLogoutIntentId() !== logoutIntentAtStart
             ) return;
             if (manifest.authenticated) {
-                writeAccessMode('interview');
                 showGallery(manifest);
                 return;
             }
@@ -843,5 +830,12 @@ document.addEventListener('keydown', (event) => {
 
 elements.contactButton.addEventListener('click', openContact);
 elements.contactClose.addEventListener('click', closeContact);
+
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted || requestedAccessMode()) return;
+    clearAccessMode();
+    beginAccessFlow();
+    discardProtectedGallery();
+});
 
 void restoreSession();
