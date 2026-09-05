@@ -222,7 +222,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 21, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 22, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,
@@ -300,17 +300,21 @@ def test_existing_public_image_categories_still_load(
         )
         page.locator("#modal-close-button").click()
 
-        personal_19 = page.locator("#gallery-grid > button").nth(18)
-        personal_19.click()
-        assert page.locator("#modal-title").text_content() == "19"
-        detail = page.locator("#modal-media-container img")
-        assert detail.evaluate("image => decodeURIComponent(new URL(image.src).pathname)") == (
-            "/개인작/19.jpg"
-        )
-        assert detail.evaluate("image => new URL(image.src).searchParams.get('v')") == asset_version(
-            "개인작/19.jpg"
-        )
-        page.locator("#modal-close-button").click()
+        for artwork_number in range(19, 23):
+            card = page.locator("#gallery-grid > button").nth(artwork_number - 1)
+            card.scroll_into_view_if_needed()
+            card.click()
+            assert page.locator("#modal-title").text_content() == str(artwork_number)
+            detail = page.locator("#modal-media-container img")
+            source_path = f"개인작/{artwork_number}.jpg"
+            assert detail.evaluate(
+                "image => decodeURIComponent(new URL(image.src).pathname)"
+            ) == f"/{source_path}"
+            assert detail.evaluate(
+                "image => new URL(image.src).searchParams.get('v')"
+            ) == asset_version(source_path)
+            assert detail.evaluate("image => image.complete && image.naturalWidth > 0")
+            page.locator("#modal-close-button").click()
     assert failed_responses == []
 
 
