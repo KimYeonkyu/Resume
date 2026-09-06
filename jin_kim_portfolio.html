@@ -6,8 +6,8 @@
     <meta name="color-scheme" content="dark">
     <meta name="portfolio-interview-url" content="https://minionion.duckdns.org/jin_kim_portfolio.html?mode=interview">
     <title>JIN KIM - Environment Concept Artist Portfolio</title>
-    <link rel="stylesheet" href="./portfolio.css">
-    <script type="module" src="./portfolio.js?v=d8c5597cf3b1c45eb80b6e032664d04d5dd853c0f15283cdd3f85a53eaf9696a"></script>
+    <link rel="stylesheet" href="./portfolio.css?v=6731fdfed0cd373f41d76074ccd37eb91ba2b2e5196f89a758814b2e13bd611e">
+    <script type="module" src="./portfolio.js?v=7f931db8ea7e50776f8ec7fd4b87ca1d1deb6efd31263042586e00c22f965627"></script>
 </head>
 <body>
     <section id="entrance-screen" class="entrance" aria-labelledby="entrance-title">
@@ -96,14 +96,12 @@
         <button id="next-button" class="viewer-control viewer-next" type="button" aria-label="다음 작품">
             <span aria-hidden="true">&#8250;</span>
         </button>
-        <div id="modal-media-container" class="viewer-media"></div>
-        <div id="modal-info" class="viewer-info">
-            <div>
-                <span id="modal-category" class="viewer-category"></span>
+        <figure class="viewer-content">
+            <div id="modal-media-container" class="viewer-media"></div>
+            <figcaption id="modal-info" class="viewer-info">
                 <h2 id="modal-title" aria-live="polite"></h2>
-                <p id="modal-description"></p>
-            </div>
-        </div>
+            </figcaption>
+        </figure>
     </div>
 
     <div id="contact-modal" class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-title" hidden>

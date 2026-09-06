@@ -532,19 +532,42 @@ input:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 200;
+    display: grid;
     width: 100vw;
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
-    background: black;
+    background: #000;
+}
+
+.viewer-content {
+    --viewer-caption-space: clamp(25px, 3.8vh, 36px);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+    margin: 0;
 }
 
 .viewer-media {
-    position: absolute;
-    inset: 0;
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
     justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    max-height: calc(100% - var(--viewer-caption-space));
     overflow: hidden;
 }
 
@@ -553,9 +576,8 @@ input:focus-visible {
     display: block;
     width: auto;
     height: auto;
-    max-width: 100vw;
-    max-height: 100vh;
-    max-height: 100dvh;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
 }
 
@@ -576,8 +598,8 @@ input:focus-visible {
 }
 
 .viewer-close {
-    top: 18px;
-    right: 18px;
+    top: max(18px, env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
 }
 
 .viewer-previous,
@@ -587,50 +609,36 @@ input:focus-visible {
 }
 
 .viewer-previous {
-    left: 14px;
+    left: max(14px, env(safe-area-inset-left));
 }
 
 .viewer-next {
-    right: 14px;
+    right: max(14px, env(safe-area-inset-right));
 }
 
 .viewer-info {
-    position: absolute;
-    inset: auto 0 0;
-    z-index: 210;
-    padding: 100px 28px 28px;
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-top: clamp(9px, 1.6vh, 14px);
     pointer-events: none;
-    background: linear-gradient(transparent, rgb(0 0 0 / 86%));
-    transition: opacity 250ms ease;
-}
-
-.viewer-info.is-hidden {
-    opacity: 0;
-}
-
-.viewer-info h2,
-.viewer-info p {
-    margin: 0;
-}
-
-.viewer-category {
-    display: inline-block;
-    margin-bottom: 7px;
-    color: #60a5fa;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+    background: none;
 }
 
 .viewer-info h2 {
-    font-size: 19px;
-}
-
-.viewer-info p {
-    margin-top: 7px;
-    color: #a8a29e;
-    font-size: 11px;
+    max-width: min(100%, 72rem);
+    margin: 0;
+    overflow: hidden;
+    color: #e7e5e4;
+    font-size: clamp(12px, 1.2vw, 16px);
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .contact-modal {

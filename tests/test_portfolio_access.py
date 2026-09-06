@@ -1539,7 +1539,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
         assert candidate.locator("#gallery-grid").text_content() == ""
         assert candidate.locator("#category-tabs").text_content() == ""
         assert candidate.locator("#modal-title").text_content() == ""
-        assert candidate.locator("#modal-description").text_content() == ""
+        assert candidate.locator("#modal-category, #modal-description").count() == 0
         assert candidate.locator("#entrance-screen").is_visible()
 
     delayed_logout = pending_logout.pop()
