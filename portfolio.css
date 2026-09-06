@@ -421,6 +421,15 @@ input:focus-visible {
     padding: 30px 24px 48px;
 }
 
+.confidential-notice {
+    margin: 0 0 22px;
+    padding-left: 12px;
+    border-left: 2px solid #57534e;
+    color: #a8a29e;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

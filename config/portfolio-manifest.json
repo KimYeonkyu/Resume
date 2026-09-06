@@ -1,8 +1,8 @@
 {
-  "protectionNotice": "Owner-confirmed protection list: Warhaven 12-20 and 22, Project MP 25-29, and every Project DM image. Protected originals live only under the external Mac mini media root; PDFs containing protected work are excluded from public delivery.",
+  "protectionNotice": "Owner-confirmed protection list: Project MP 25-29 and every selected Project DM image. All 23 Warhaven images are public. Protected MP and DM originals live only under the external Mac mini media root; portfolio PDFs remain excluded from public delivery.",
   "deploymentExclusions": {
     "directories": ["project DM"],
-    "files": ["warhaven.pdf", "MP.pdf", "DM.pdf", "워헤이븐/12.jpg", "워헤이븐/13.jpg", "워헤이븐/14.jpg", "워헤이븐/15.jpg", "워헤이븐/16.jpg", "워헤이븐/17.jpg", "워헤이븐/18.jpg", "워헤이븐/19.jpg", "워헤이븐/20.jpg", "워헤이븐/22.jpg", "project MP/25.jpg", "project MP/26.jpg", "project MP/27.jpg", "project MP/28.jpg", "project MP/29.jpg"],
+    "files": ["warhaven.pdf", "MP.pdf", "DM.pdf", "project MP/25.jpg", "project MP/26.jpg", "project MP/27.jpg", "project MP/28.jpg", "project MP/29.jpg"],
     "protectedFileHashes": {
       "warhaven.pdf": "11e53d5a5adc96c42caed21aa01e4eaacba8cfaae3cdbccca5a6428ab097b7fe",
       "MP.pdf": "a93af17ca3718c94e62322bd007292a030cabea4f0d6feb903305c0dc0587488",
@@ -71,17 +71,17 @@
         { "id": "warhaven-09", "title": "09", "type": "image", "sourcePath": "워헤이븐/09.jpg" },
         { "id": "warhaven-10", "title": "10", "type": "image", "sourcePath": "워헤이븐/10.jpg" },
         { "id": "warhaven-11", "title": "11", "type": "image", "sourcePath": "워헤이븐/11.jpg" },
-        { "id": "warhaven-12", "title": "12", "type": "image", "protected": true, "routeId": "warhaven-012", "sourcePath": "워헤이븐/12.jpg", "sha256": "8151c9545b363f46ac1fcbc347e1e599a59c7d48bac445a36e754abf8d61a68a", "contentType": "image/jpeg" },
-        { "id": "warhaven-13", "title": "13", "type": "image", "protected": true, "routeId": "warhaven-013", "sourcePath": "워헤이븐/13.jpg", "sha256": "e6c51f6a2d756f8edf9eaf6bfc98555810328448fbf7fd28d1ebf8bde558573c", "contentType": "image/jpeg" },
-        { "id": "warhaven-14", "title": "14", "type": "image", "protected": true, "routeId": "warhaven-014", "sourcePath": "워헤이븐/14.jpg", "sha256": "5f1b2c9ff20fc1dce60b2f5c08dd5a03ec01693deb71f26f66ef1c021a14d2e7", "contentType": "image/jpeg" },
-        { "id": "warhaven-15", "title": "15", "type": "image", "protected": true, "routeId": "warhaven-015", "sourcePath": "워헤이븐/15.jpg", "sha256": "89bbccffcc11db04091f32d959bc0369e983f3fb90d1a0da8569ab0e31168b41", "contentType": "image/jpeg" },
-        { "id": "warhaven-16", "title": "16", "type": "image", "protected": true, "routeId": "warhaven-016", "sourcePath": "워헤이븐/16.jpg", "sha256": "5dd4a940475211cb6fac10c4e6992cfa421397fb12eb8c7c1cf382cf936160a2", "contentType": "image/jpeg" },
-        { "id": "warhaven-17", "title": "17", "type": "image", "protected": true, "routeId": "warhaven-017", "sourcePath": "워헤이븐/17.jpg", "sha256": "720aa14516cf23fa0f09fd8ec617f57e1b40d62a7072d014984b09d93e00d6f4", "contentType": "image/jpeg" },
-        { "id": "warhaven-18", "title": "18", "type": "image", "protected": true, "routeId": "warhaven-018", "sourcePath": "워헤이븐/18.jpg", "sha256": "5cb19a7a543c71941f73636fd574a3e72af016acb60e4a274524eef23340b6e0", "contentType": "image/jpeg" },
-        { "id": "warhaven-19", "title": "19", "type": "image", "protected": true, "routeId": "warhaven-019", "sourcePath": "워헤이븐/19.jpg", "sha256": "57b7cbc121ac41c372765b1bf7f2cef41a18c286ae44858df7162590fb6790cf", "contentType": "image/jpeg" },
-        { "id": "warhaven-20", "title": "20", "type": "image", "protected": true, "routeId": "warhaven-020", "sourcePath": "워헤이븐/20.jpg", "sha256": "7d3a4a9ab3ef180321bcf73e8a63553932402a27ff5b3e09d42f2d32e742aa33", "contentType": "image/jpeg" },
+        { "id": "warhaven-12", "title": "12", "type": "image", "sourcePath": "워헤이븐/12.jpg" },
+        { "id": "warhaven-13", "title": "13", "type": "image", "sourcePath": "워헤이븐/13.jpg" },
+        { "id": "warhaven-14", "title": "14", "type": "image", "sourcePath": "워헤이븐/14.jpg" },
+        { "id": "warhaven-15", "title": "15", "type": "image", "sourcePath": "워헤이븐/15.jpg" },
+        { "id": "warhaven-16", "title": "16", "type": "image", "sourcePath": "워헤이븐/16.jpg" },
+        { "id": "warhaven-17", "title": "17", "type": "image", "sourcePath": "워헤이븐/17.jpg" },
+        { "id": "warhaven-18", "title": "18", "type": "image", "sourcePath": "워헤이븐/18.jpg" },
+        { "id": "warhaven-19", "title": "19", "type": "image", "sourcePath": "워헤이븐/19.jpg" },
+        { "id": "warhaven-20", "title": "20", "type": "image", "sourcePath": "워헤이븐/20.jpg" },
         { "id": "warhaven-21", "title": "21", "type": "image", "sourcePath": "워헤이븐/21.jpg" },
-        { "id": "warhaven-22", "title": "22", "type": "image", "protected": true, "routeId": "warhaven-022", "sourcePath": "워헤이븐/22.jpg", "sha256": "8ad1e539983b51ca39fe2699d76621739f114b804ddfe87f4dfad5c9f67a4e3b", "contentType": "image/jpeg" },
+        { "id": "warhaven-22", "title": "22", "type": "image", "sourcePath": "워헤이븐/22.jpg" },
         { "id": "warhaven-23", "title": "23", "type": "image", "sourcePath": "워헤이븐/23.jpg" }
       ]
     },

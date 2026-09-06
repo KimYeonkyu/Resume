@@ -215,8 +215,8 @@
     {
       "id": "warhaven",
       "title": "워헤이븐",
-      "protected": true,
-      "locked": true,
+      "protected": false,
+      "locked": false,
       "itemCount": 23,
       "items": [
         {
@@ -308,58 +308,76 @@
           "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/11.jpg?v=d385ffe1558ef34f11bffb7bdc7d1d3d4bd3fe8ce90851757625ac0be580e410"
         },
         {
-          "id": "locked-warhaven-12",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-12",
+          "title": "12",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 12",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/12.jpg?v=8151c9545b363f46ac1fcbc347e1e599a59c7d48bac445a36e754abf8d61a68a"
         },
         {
-          "id": "locked-warhaven-13",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-13",
+          "title": "13",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 13",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/13.jpg?v=e6c51f6a2d756f8edf9eaf6bfc98555810328448fbf7fd28d1ebf8bde558573c"
         },
         {
-          "id": "locked-warhaven-14",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-14",
+          "title": "14",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 14",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/14.jpg?v=5f1b2c9ff20fc1dce60b2f5c08dd5a03ec01693deb71f26f66ef1c021a14d2e7"
         },
         {
-          "id": "locked-warhaven-15",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-15",
+          "title": "15",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 15",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/15.jpg?v=89bbccffcc11db04091f32d959bc0369e983f3fb90d1a0da8569ab0e31168b41"
         },
         {
-          "id": "locked-warhaven-16",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-16",
+          "title": "16",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 16",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/16.jpg?v=5dd4a940475211cb6fac10c4e6992cfa421397fb12eb8c7c1cf382cf936160a2"
         },
         {
-          "id": "locked-warhaven-17",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-17",
+          "title": "17",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 17",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/17.jpg?v=720aa14516cf23fa0f09fd8ec617f57e1b40d62a7072d014984b09d93e00d6f4"
         },
         {
-          "id": "locked-warhaven-18",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-18",
+          "title": "18",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 18",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/18.jpg?v=5cb19a7a543c71941f73636fd574a3e72af016acb60e4a274524eef23340b6e0"
         },
         {
-          "id": "locked-warhaven-19",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-19",
+          "title": "19",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 19",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/19.jpg?v=57b7cbc121ac41c372765b1bf7f2cef41a18c286ae44858df7162590fb6790cf"
         },
         {
-          "id": "locked-warhaven-20",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-20",
+          "title": "20",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 20",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/20.jpg?v=7d3a4a9ab3ef180321bcf73e8a63553932402a27ff5b3e09d42f2d32e742aa33"
         },
         {
           "id": "warhaven-21",
@@ -370,10 +388,12 @@
           "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/21.jpg?v=dd85aec8b2d6e34fb2bcf5550a08391bf0764d522cac3118d2bfe318ce9e836d"
         },
         {
-          "id": "locked-warhaven-22",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
+          "id": "warhaven-22",
+          "title": "22",
+          "category": "워헤이븐",
+          "type": "image",
+          "description": "워헤이븐 · 22",
+          "url": "%EC%9B%8C%ED%97%A4%EC%9D%B4%EB%B8%90/22.jpg?v=8ad1e539983b51ca39fe2699d76621739f114b804ddfe87f4dfad5c9f67a4e3b"
         },
         {
           "id": "warhaven-23",
@@ -717,9 +737,9 @@
     {
       "id": "project-mp",
       "title": "Project MP",
-      "protected": true,
-      "locked": true,
-      "itemCount": 6,
+      "protected": false,
+      "locked": false,
+      "itemCount": 1,
       "items": [
         {
           "id": "project-mp-24",
@@ -728,117 +748,6 @@
           "type": "image",
           "description": "Project MP · Project MP · 24",
           "url": "project%20MP/24.jpg?v=3616d3a67f513ae6e867f6b9e785507d2a08d7c17765db6718d17495ac7df7bc"
-        },
-        {
-          "id": "locked-project-mp-2",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-mp-3",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-mp-4",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-mp-5",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-mp-6",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        }
-      ]
-    },
-    {
-      "id": "project-dm",
-      "title": "Project DM",
-      "protected": true,
-      "locked": true,
-      "itemCount": 12,
-      "items": [
-        {
-          "id": "locked-project-dm-1",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-2",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-3",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-4",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-5",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-6",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-7",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-8",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-9",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-10",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-11",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-12",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
         }
       ]
     }

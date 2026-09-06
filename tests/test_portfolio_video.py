@@ -408,7 +408,7 @@ def test_viewer_constrains_an_unusually_long_caption_to_the_mobile_viewport(
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 23, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 23, 0), ("워헤이븐", 23, 0), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,

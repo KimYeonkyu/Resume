@@ -20,7 +20,7 @@ The backend owns these same-origin routes:
 | `POST /api/auth/login` | Bounded JSON body, exact canonical `Origin`, bounded in-memory per-client limiter before password verification |
 | `GET /api/auth/session` | Validates the signed, expiring session cookie |
 | `POST /api/auth/logout` | Same-origin cookie expiry |
-| `GET /api/projects` | Guest-safe locked placeholders or opaque protected URLs for a valid session |
+| `GET /api/projects` | Public-only projects/items for guests, or the complete portfolio with opaque protected URLs for a valid session |
 | `GET`, `HEAD /protected/:routeId` | Authenticates first, then re-confines and SHA-256-verifies the external file before bytes/metadata are returned |
 | `GET`, `HEAD /healthz` | Loopback liveness endpoint used by Caddy |
 | other `GET`, `HEAD` paths | Exact allowlisted files from the validated `dist/` tree |
@@ -36,7 +36,7 @@ At startup the process fails closed unless:
 - the protected root is a real directory outside the checkout;
 - every selected source is a regular, confined file whose SHA-256 matches `config/portfolio-manifest.json`.
 
-The owner-confirmed protected scope remains Warhaven 12–20 and 22, Project MP 25–29, and all selected Project DM images (27 protected originals total). The production root is external to this checkout:
+The owner-confirmed protected scope is Project MP 25–29 and all 12 selected Project DM images (17 protected originals total). All 23 Warhaven images are public. The production root for protected media is external to this checkout:
 
 ```text
 /Users/minionion/portfolio-protected-media/KimYeonkyu-Resume/originals
