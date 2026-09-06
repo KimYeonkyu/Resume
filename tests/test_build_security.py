@@ -412,8 +412,30 @@ def test_server_bundle_builds_without_embedding_runtime_secret_values() -> None:
         assert sentinel not in text
 
 
+def test_project_dm_manifest_matches_owner_selected_items_and_replacement() -> None:
+    project = next(project for project in CONFIGURATION["projects"] if project["id"] == "project-dm")
+    expected_numbers = ("01", "02", "04", "05", "07", "10", "11", "12", "13", "14", "15", "18")
+
+    assert [item["id"] for item in project["items"]] == [
+        f"project-dm-{number}" for number in expected_numbers
+    ]
+    assert [item["title"] for item in project["items"]] == [
+        f"Project DM · {number}" for number in expected_numbers
+    ]
+    replacement = next(item for item in project["items"] if item["id"] == "project-dm-15")
+    assert replacement == {
+        "id": "project-dm-15",
+        "title": "Project DM · 15",
+        "type": "image",
+        "routeId": "dm-015",
+        "sourcePath": "project DM/Sheet_ruin04.jpg",
+        "sha256": "807629e2bce0195010918ada657d0d51f1a87c3f5d29afee2f6f978087efecec",
+        "contentType": "image/jpeg",
+    }
+
+
 def test_public_repository_tree_contains_no_protected_source_media() -> None:
-    assert len(protected_items()) == 33
+    assert len(protected_items()) == 27
     for item in protected_items():
         assert not (REPO_ROOT / item["sourcePath"]).exists(), item["sourcePath"]
     for file_name in CONFIGURATION["deploymentExclusions"]["files"]:

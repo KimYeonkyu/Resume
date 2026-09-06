@@ -36,7 +36,7 @@ At startup the process fails closed unless:
 - the protected root is a real directory outside the checkout;
 - every selected source is a regular, confined file whose SHA-256 matches `config/portfolio-manifest.json`.
 
-The owner-confirmed protected scope remains Warhaven 12–20 and 22, Project MP 25–29, and all Project DM images (33 originals total). The production root is external to this checkout:
+The owner-confirmed protected scope remains Warhaven 12–20 and 22, Project MP 25–29, and all selected Project DM images (27 protected originals total). The production root is external to this checkout:
 
 ```text
 /Users/minionion/portfolio-protected-media/KimYeonkyu-Resume/originals
