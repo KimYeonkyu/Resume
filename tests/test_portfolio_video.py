@@ -172,7 +172,7 @@ def test_public_resume_has_no_horizontal_overflow(
 ) -> None:
     width, height = viewport
     page.set_viewport_size({"width": width, "height": height})
-    page.goto(portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0] + "/", wait_until="domcontentloaded")
+    page.goto(portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0] + "/", wait_until="load")
 
     assert page.evaluate(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
