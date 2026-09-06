@@ -37,6 +37,27 @@ describe("public artwork content types", () => {
     expect(response!.headers.get("content-type")).toBe("image/webp");
     expect(Buffer.from(await response!.arrayBuffer())).toEqual(expectedBytes);
   });
+
+  it.each(["GET", "HEAD"] as const)("serves the allowlisted PNG portrait as image/png for %s", async (method) => {
+    const root = await temporaryRoot();
+    const sourcePath = "kyk.png";
+    const expectedBytes = Buffer.from("synthetic PNG portrait bytes");
+    await writeFile(path.join(root, sourcePath), expectedBytes);
+    const store = await createPublicAssetStore({
+      allowedPaths: new Set([sourcePath]),
+      mediaVersions: {},
+      root,
+      versionedPaths: new Set(),
+    });
+
+    const response = await store.response(`/${sourcePath}`, method);
+    expect(response).not.toBeNull();
+    expect(response!.headers.get("content-type")).toBe("image/png");
+    expect(response!.headers.get("content-length")).toBe(String(expectedBytes.byteLength));
+    expect(Buffer.from(await response!.arrayBuffer())).toEqual(
+      method === "GET" ? expectedBytes : Buffer.alloc(0),
+    );
+  });
 });
 
 describe("versioned public-media startup validation", () => {

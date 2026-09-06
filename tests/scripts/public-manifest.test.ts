@@ -25,9 +25,23 @@ import {
   createPublicPortfolioManifest,
   validatePublicMediaRoot,
 } from "../../scripts/public-manifest.mjs";
+import { rootPublicFiles } from "../../scripts/public-build-policy.mjs";
+import { publicRuntimeAssetPaths, publicRuntimeMediaPaths } from "../../src/portfolio";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const execFileAsync = promisify(execFile);
+
+describe("public root asset policy", () => {
+  it("keeps the build and runtime root allowlists synchronized", () => {
+    const runtimeMediaPaths = publicRuntimeMediaPaths();
+    const runtimeRootAssets = [...publicRuntimeAssetPaths()]
+      .filter((assetPath) => !runtimeMediaPaths.has(assetPath))
+      .sort();
+    const buildRootAssets = [...new Set([...rootPublicFiles, "resume.css"])].sort();
+
+    expect(runtimeRootAssets).toEqual(buildRootAssets);
+  });
+});
 
 async function currentPublicMediaVersions(): Promise<Record<string, string>> {
   const sourcePaths = new Set<string>();
