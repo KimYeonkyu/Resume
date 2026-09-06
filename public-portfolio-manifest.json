@@ -766,7 +766,7 @@
       "title": "Project DM",
       "protected": true,
       "locked": true,
-      "itemCount": 18,
+      "itemCount": 12,
       "items": [
         {
           "id": "locked-project-dm-1",
@@ -836,42 +836,6 @@
         },
         {
           "id": "locked-project-dm-12",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-13",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-14",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-15",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-16",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-17",
-          "title": "비공개 작품",
-          "type": "locked",
-          "locked": true
-        },
-        {
-          "id": "locked-project-dm-18",
           "title": "비공개 작품",
           "type": "locked",
           "locked": true

@@ -118,7 +118,7 @@ def guest_manifest() -> dict[str, object]:
     ]
     for project_id, title, count in (
         ("project-mp", "Project MP", 6),
-        ("project-dm", "Project DM", 18),
+        ("project-dm", "Project DM", 12),
     ):
         projects.append(
             {
@@ -206,7 +206,7 @@ def install_interview_api(
     session_value = secrets.token_hex(24)
     protected_urls = {
         "project-mp": [f"/protected/{secrets.token_hex(10)}" for _ in range(6)],
-        "project-dm": [f"/protected/{secrets.token_hex(10)}" for _ in range(18)],
+        "project-dm": [f"/protected/{secrets.token_hex(10)}" for _ in range(12)],
     }
     all_protected_urls = {
         url for project_urls in protected_urls.values() for url in project_urls
@@ -386,7 +386,7 @@ def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: 
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
-    for title, locked_count in (("워헤이븐", 10), ("Project MP", 5), ("Project DM", 18)):
+    for title, locked_count in (("워헤이븐", 10), ("Project MP", 5), ("Project DM", 12)):
         page.get_by_role("button", name=title, exact=True).click()
         assert page.locator('#gallery-grid [data-locked="true"]').count() == locked_count
 
@@ -792,7 +792,7 @@ def test_guest_protected_categories_are_dark_locked_and_request_no_media(
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
-    for title, count in (("Project MP", 6), ("Project DM", 18)):
+    for title, count in (("Project MP", 6), ("Project DM", 12)):
         page.get_by_role("button", name=title, exact=True).click()
         cards = page.locator('#gallery-grid [data-locked="true"]')
         assert cards.count() == count
@@ -831,7 +831,7 @@ def test_interview_form_enter_unlocks_both_projects_once(
     page.locator("#gallery-shell").wait_for(state="visible")
     assert calls["login"] == 1
 
-    for title, count in (("Project MP", 6), ("Project DM", 18)):
+    for title, count in (("Project MP", 6), ("Project DM", 12)):
         page.get_by_role("button", name=title, exact=True).click()
         cards = page.locator("#gallery-grid > button")
         assert cards.count() == count
