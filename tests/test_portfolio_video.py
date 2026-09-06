@@ -110,8 +110,8 @@ def public_manifest() -> dict[str, object]:
     return {"authenticated": False, "projects": projects}
 
 
-def install_public_api(page: Page) -> None:
-    manifest = public_manifest()
+def install_public_api(page: Page, manifest_override: dict[str, object] | None = None) -> None:
+    manifest = manifest_override or public_manifest()
 
     def route_api(route: Route) -> None:
         path = route.request.url.split("?", 1)[0]
@@ -127,11 +127,38 @@ def install_public_api(page: Page) -> None:
     page.route("**/api/**", route_api)
 
 
-def enter_public(page: Page, portfolio_url: str) -> None:
-    install_public_api(page)
+def enter_public(
+    page: Page,
+    portfolio_url: str,
+    manifest_override: dict[str, object] | None = None,
+) -> None:
+    install_public_api(page, manifest_override)
     page.goto(portfolio_url, wait_until="domcontentloaded")
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
+
+
+def assert_caption_below_rendered_media(page: Page) -> None:
+    media = page.locator("#modal-media-container > img, #modal-media-container > video")
+    caption = page.locator("#modal-info")
+    media.wait_for(state="visible")
+    media_box = media.bounding_box()
+    caption_box = caption.bounding_box()
+    viewport = page.viewport_size
+    assert media_box is not None and caption_box is not None and viewport is not None
+    assert media_box["y"] + media_box["height"] <= caption_box["y"] + 0.5
+    assert caption_box["y"] + caption_box["height"] <= viewport["height"] + 0.5
+
+
+def assert_media_and_caption_group_is_vertically_centered(page: Page) -> None:
+    media = page.locator("#modal-media-container > img, #modal-media-container > video")
+    caption = page.locator("#modal-info")
+    media_box = media.bounding_box()
+    caption_box = caption.bounding_box()
+    viewport = page.viewport_size
+    assert media_box is not None and caption_box is not None and viewport is not None
+    group_center = (media_box["y"] + caption_box["y"] + caption_box["height"]) / 2
+    assert group_center == pytest.approx(viewport["height"] / 2, abs=max(2, viewport["height"] * 0.02))
 
 
 def test_public_resume_still_loads(page: Page, portfolio_url: str) -> None:
@@ -217,7 +244,166 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     assert metadata["duration"] == pytest.approx(72.149, abs=0.2)
     assert metadata["width"] == 1920
     assert metadata["height"] == 1080
+
+    trailer.evaluate("video => { video.dataset.viewerInstance = 'original'; }")
+    trailer.focus()
+    page.keyboard.press("ArrowRight")
+    assert trailer.get_attribute("data-viewer-instance") == "original"
+
+    page.locator("#modal-close-button").focus()
+    page.keyboard.press("Shift+Tab")
+    assert trailer.evaluate("video => video === document.activeElement")
+    trailer_handle = trailer.element_handle()
+    assert trailer_handle is not None
+    page.locator("#modal-close-button").click()
+    teardown = trailer_handle.evaluate(
+        "video => ({ connected: video.isConnected, src: video.getAttribute('src'), paused: video.paused })"
+    )
+    assert teardown == {"connected": False, "src": None, "paused": True}
     assert failed_responses == []
+
+
+def test_viewer_shows_one_persistent_identity_line_without_a_gradient(
+    page: Page, portfolio_url: str
+) -> None:
+    enter_public(page, portfolio_url)
+    page.locator("#gallery-grid > button").nth(16).click()
+
+    modal = page.locator("#detail-modal")
+    caption = modal.locator("#modal-info")
+    caption_line = caption.locator("#modal-title")
+    assert caption_line.inner_text() == "개인작 17"
+    assert caption.locator(":visible").count() == 1
+    assert caption.evaluate("element => getComputedStyle(element).backgroundImage") == "none"
+    for pseudo in ("::before", "::after"):
+        assert caption.evaluate(
+            "(element, pseudo) => getComputedStyle(element, pseudo).backgroundImage",
+            pseudo,
+        ) == "none"
+    assert caption_line.evaluate("element => getComputedStyle(element).whiteSpace") == "nowrap"
+    assert_caption_below_rendered_media(page)
+
+    page.wait_for_timeout(3_200)
+    assert caption_line.is_visible()
+    assert caption.evaluate("element => getComputedStyle(element).opacity") == "1"
+    assert caption_line.inner_text() == "개인작 17"
+
+
+def test_every_personal_item_navigation_reuses_the_caption_below_media_layout(
+    page: Page, portfolio_url: str
+) -> None:
+    enter_public(page, portfolio_url)
+    page.locator("#gallery-grid > button").first.click()
+
+    modal = page.locator("#detail-modal")
+    for artwork_number in range(1, 23):
+        assert modal.locator(".viewer-content > #modal-media-container").count() == 1
+        assert modal.locator(".viewer-content > #modal-info").count() == 1
+        assert modal.locator("#modal-title").inner_text() == f"개인작 {artwork_number}"
+        assert_caption_below_rendered_media(page)
+        modal.locator("#next-button").click()
+
+    assert modal.locator("#modal-title").inner_text() == "개인작 1"
+    modal.locator("#modal-close-button").click()
+
+    page.get_by_role("button", name="Project MP", exact=True).click()
+    page.locator("#gallery-grid .artwork-card").click()
+    assert modal.locator("#modal-title").inner_text() == "Project MP · 24"
+    assert modal.locator("#modal-info").inner_text().count("Project MP") == 1
+    assert_caption_below_rendered_media(page)
+
+
+def test_viewer_identity_deduplicates_case_and_supported_category_boundaries(
+    page: Page, portfolio_url: str
+) -> None:
+    source_path = "개인작/1.jpg"
+    titles = ["project mp", "Project MP•24", "Project MP / 28", "27"]
+    manifest = {
+        "authenticated": False,
+        "projects": [
+            {
+                "id": "identity-cases",
+                "title": "Project MP",
+                "protected": False,
+                "locked": False,
+                "itemCount": len(titles),
+                "items": [
+                    {
+                        "id": f"identity-{index}",
+                        "title": title,
+                        **({} if title == "27" else {"category": "Project MP"}),
+                        "type": "image",
+                        "url": asset_url(source_path),
+                    }
+                    for index, title in enumerate(titles)
+                ],
+            }
+        ],
+    }
+    enter_public(page, portfolio_url, manifest)
+    page.locator("#gallery-grid > button").first.click()
+
+    expected = ["project mp", "Project MP•24", "Project MP / 28", "Project MP 27"]
+    for index, caption in enumerate(expected):
+        assert page.locator("#modal-title").inner_text() == caption
+        assert page.locator("#modal-info").inner_text().casefold().count("project mp") == 1
+        if index + 1 < len(expected):
+            page.locator("#next-button").click()
+
+
+@pytest.mark.parametrize(
+    "viewport",
+    [
+        (1440, 1000),
+        (768, 1024),
+        (390, 844),
+        (320, 568),
+        (1920, 500),
+        (1024, 300),
+        (844, 320),
+    ],
+)
+def test_image_and_video_viewers_fit_caption_below_media_at_key_viewports(
+    page: Page, portfolio_url: str, viewport: tuple[int, int]
+) -> None:
+    width, height = viewport
+    page.set_viewport_size({"width": width, "height": height})
+    enter_public(page, portfolio_url)
+
+    page.locator("#gallery-grid > button").nth(1).click()
+    assert page.locator("#modal-title").inner_text() == "개인작 2"
+    assert_caption_below_rendered_media(page)
+    assert_media_and_caption_group_is_vertically_centered(page)
+    page.locator("#modal-close-button").click()
+
+    page.get_by_role("button", name="두미니어니언", exact=True).click()
+    page.locator("#gallery-grid > button").click()
+    assert page.locator("#modal-title").inner_text() == "두미니어니언 DoMiniOnion Trailer"
+    assert_caption_below_rendered_media(page)
+    assert_media_and_caption_group_is_vertically_centered(page)
+    assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+
+
+def test_viewer_constrains_an_unusually_long_caption_to_the_mobile_viewport(
+    page: Page, portfolio_url: str
+) -> None:
+    page.set_viewport_size({"width": 320, "height": 568})
+    enter_public(page, portfolio_url)
+    page.locator("#gallery-grid > button").first.click()
+
+    caption = page.locator("#modal-info")
+    caption_line = caption.locator("#modal-title")
+    caption_line.evaluate("element => { element.textContent = '긴 제목 '.repeat(120); }")
+    caption_box = caption.bounding_box()
+    line_box = caption_line.bounding_box()
+    assert caption_box is not None and line_box is not None
+    assert caption_box["x"] >= 12
+    assert caption_box["x"] + caption_box["width"] <= 308
+    assert line_box["x"] >= 12
+    assert line_box["x"] + line_box["width"] <= 308
+    assert caption_line.evaluate("element => element.scrollWidth > element.clientWidth")
+    assert caption_line.evaluate("element => getComputedStyle(element).textOverflow") == "ellipsis"
+    assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
 
 
 @pytest.mark.parametrize(
@@ -278,7 +464,7 @@ def test_existing_public_image_categories_still_load(
     if category == "개인작":
         personal_16 = page.locator("#gallery-grid > button").nth(15)
         personal_16.click()
-        assert page.locator("#modal-title").text_content() == "16"
+        assert page.locator("#modal-title").text_content() == "개인작 16"
         detail = page.locator("#modal-media-container img")
         assert detail.evaluate("image => decodeURIComponent(new URL(image.src).pathname)") == (
             "/개인작/16.jpg"
@@ -290,7 +476,7 @@ def test_existing_public_image_categories_still_load(
 
         personal_18 = page.locator("#gallery-grid > button").nth(17)
         personal_18.click()
-        assert page.locator("#modal-title").text_content() == "18"
+        assert page.locator("#modal-title").text_content() == "개인작 18"
         detail = page.locator("#modal-media-container img")
         assert detail.evaluate("image => decodeURIComponent(new URL(image.src).pathname)") == (
             "/개인작/18.jpg"
@@ -304,7 +490,7 @@ def test_existing_public_image_categories_still_load(
             card = page.locator("#gallery-grid > button").nth(artwork_number - 1)
             card.scroll_into_view_if_needed()
             card.click()
-            assert page.locator("#modal-title").text_content() == str(artwork_number)
+            assert page.locator("#modal-title").text_content() == f"개인작 {artwork_number}"
             detail = page.locator("#modal-media-container img")
             source_path = f"개인작/{artwork_number}.jpg"
             assert detail.evaluate(
@@ -330,18 +516,18 @@ def test_viewer_keyboard_swipe_focus_trap_and_focus_restore(
     assert modal.is_visible()
     assert modal.get_attribute("aria-labelledby") == "modal-title"
     assert page.locator("#modal-close-button").evaluate("element => element === document.activeElement")
-    assert page.locator("#modal-title").text_content() == "1"
+    assert page.locator("#modal-title").text_content() == "개인작 1"
     assert page.locator("#modal-media-container img").evaluate(
         "image => new URL(image.src).searchParams.get('v')"
     ) == asset_version("개인작/1.jpg")
 
     page.keyboard.press("ArrowRight")
-    assert page.locator("#modal-title").text_content() == "2"
+    assert page.locator("#modal-title").text_content() == "개인작 2"
     assert page.locator("#modal-media-container img").evaluate(
         "image => new URL(image.src).searchParams.get('v')"
     ) == asset_version("개인작/2.jpg")
     page.keyboard.press("ArrowLeft")
-    assert page.locator("#modal-title").text_content() == "1"
+    assert page.locator("#modal-title").text_content() == "개인작 1"
 
     modal.evaluate(
         """element => {
@@ -351,7 +537,7 @@ def test_viewer_keyboard_swipe_focus_trap_and_focus_restore(
             element.dispatchEvent(new TouchEvent('touchend', { changedTouches: [end], bubbles: true }));
         }"""
     )
-    assert page.locator("#modal-title").text_content() == "2"
+    assert page.locator("#modal-title").text_content() == "개인작 2"
 
     page.locator("#modal-close-button").focus()
     page.keyboard.press("Shift+Tab")

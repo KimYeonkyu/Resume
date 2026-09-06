@@ -3,7 +3,6 @@ const state = {
     currentProjectId: null,
     currentItemIndex: 0,
     lastFocusedElement: null,
-    viewerInfoTimer: null,
     touchStartX: null,
     touchStartY: null,
     inertStates: [],
@@ -70,10 +69,7 @@ const elements = {
     previousButton: document.querySelector('#previous-button'),
     nextButton: document.querySelector('#next-button'),
     modalMedia: document.querySelector('#modal-media-container'),
-    modalInfo: document.querySelector('#modal-info'),
-    modalCategory: document.querySelector('#modal-category'),
     modalTitle: document.querySelector('#modal-title'),
-    modalDescription: document.querySelector('#modal-description'),
     contactButton: document.querySelector('#contact-button'),
     contactModal: document.querySelector('#contact-modal'),
     contactClose: document.querySelector('#contact-close-button'),
@@ -85,6 +81,26 @@ const sessionIntentChannel = typeof BroadcastChannel === 'function'
 
 function currentProject() {
     return state.projects.find((project) => project.id === state.currentProjectId) ?? null;
+}
+
+function cleanIdentityPart(value) {
+    return typeof value === 'string' ? value.trim().replace(/\s+/gu, ' ') : '';
+}
+
+function viewerIdentity(item, project) {
+    const category = cleanIdentityPart(item.category) || cleanIdentityPart(project.title);
+    const title = cleanIdentityPart(item.title);
+    if (!category) return title;
+    if (!title) return category;
+
+    const normalizedCategory = category.normalize('NFKC').toLocaleLowerCase();
+    const normalizedTitle = title.normalize('NFKC').toLocaleLowerCase();
+    if (normalizedTitle === normalizedCategory) return title;
+    if (normalizedTitle.startsWith(normalizedCategory)) {
+        const remainder = normalizedTitle.slice(normalizedCategory.length);
+        if (/^[\s·•:|/—–_-]/u.test(remainder)) return title;
+    }
+    return `${category} ${title}`;
 }
 
 function beginAccessFlow({ local = true } = {}) {
@@ -379,9 +395,7 @@ function discardProtectedGallery() {
     state.currentItemIndex = 0;
     elements.galleryGrid.replaceChildren();
     elements.categoryTabs.replaceChildren();
-    elements.modalCategory.textContent = '';
     elements.modalTitle.textContent = '';
-    elements.modalDescription.textContent = '';
     elements.artworkCount.textContent = '0';
     elements.relockButton.hidden = true;
     elements.galleryShell.hidden = true;
@@ -652,23 +666,22 @@ function renderViewerItem() {
     if (!item || item.locked) return;
     cleanupViewerMedia();
 
+    const identity = viewerIdentity(item, project);
     const media = document.createElement(item.type === 'video' ? 'video' : 'img');
     media.src = item.url;
     if (item.type === 'video') {
         media.controls = true;
         media.autoplay = true;
         media.playsInline = true;
+        media.setAttribute('aria-label', identity);
         if (item.poster) media.poster = item.poster;
     } else {
         media.alt = item.title;
         media.draggable = false;
     }
     elements.modalMedia.append(media);
-    elements.modalCategory.textContent = item.category;
-    elements.modalTitle.textContent = item.title;
-    elements.modalDescription.textContent = item.description ?? '';
+    elements.modalTitle.textContent = identity;
     preloadAdjacent(project.items);
-    showViewerInfo();
 }
 
 function preloadAdjacent(items) {
@@ -708,7 +721,6 @@ function closeViewer({ restoreFocus = true } = {}) {
     state.inertStates = [];
     state.touchStartX = null;
     state.touchStartY = null;
-    window.clearTimeout(state.viewerInfoTimer);
     if (restoreFocus) lastFocusedElement?.focus();
 }
 
@@ -717,14 +729,6 @@ function moveViewer(offset) {
     if (items.length === 0) return;
     state.currentItemIndex = (state.currentItemIndex + offset + items.length) % items.length;
     renderViewerItem();
-}
-
-function showViewerInfo() {
-    elements.modalInfo.classList.remove('is-hidden');
-    window.clearTimeout(state.viewerInfoTimer);
-    state.viewerInfoTimer = window.setTimeout(() => {
-        if (!elements.detailModal.hidden) elements.modalInfo.classList.add('is-hidden');
-    }, 3000);
 }
 
 function trapFocus(container, event) {
@@ -782,11 +786,9 @@ elements.relockButton.addEventListener('click', relockPortfolio);
 elements.modalClose.addEventListener('click', closeViewer);
 elements.previousButton.addEventListener('click', () => moveViewer(-1));
 elements.nextButton.addEventListener('click', () => moveViewer(1));
-elements.detailModal.addEventListener('pointermove', showViewerInfo);
 elements.detailModal.addEventListener('touchstart', (event) => {
     state.touchStartX = null;
     state.touchStartY = null;
-    showViewerInfo();
     if (event.touches.length !== 1) return;
     state.touchStartX = event.touches[0].clientX;
     state.touchStartY = event.touches[0].clientY;

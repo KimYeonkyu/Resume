@@ -202,6 +202,22 @@ def test_portfolio_runtime_script_url_is_bound_to_its_content_digest() -> None:
     source = (REPO_ROOT / "jin_kim_portfolio.html").read_text(encoding="utf-8")
     assert f'src="./portfolio.js?v={script_digest}"' in source
 
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    published = (DIST / "jin_kim_portfolio.html").read_text(encoding="utf-8")
+    assert f'src="./portfolio.js?v={script_digest}"' in published
+
+
+def test_portfolio_stylesheet_url_is_bound_to_its_content_digest() -> None:
+    stylesheet_digest = hashlib.sha256((REPO_ROOT / "portfolio.css").read_bytes()).hexdigest()
+    source = (REPO_ROOT / "jin_kim_portfolio.html").read_text(encoding="utf-8")
+    assert f'href="./portfolio.css?v={stylesheet_digest}"' in source
+
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    published = (DIST / "jin_kim_portfolio.html").read_text(encoding="utf-8")
+    assert f'href="./portfolio.css?v={stylesheet_digest}"' in published
+
 
 def test_resume_nypc_result_link_opens_the_attached_public_pdf() -> None:
     expected_digest = "a2aa4c70ab62756bc0c1bb544d5c5561552fe3e21e99baca32d3fee3afa308cb"
