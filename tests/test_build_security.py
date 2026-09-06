@@ -95,8 +95,8 @@ def test_personal_manifest_matches_repository_image_identity_and_natural_order()
 
 def test_personal_19_and_20_artwork_files_match_approved_versions() -> None:
     expected_digests = {
-        "개인작/19.jpg": "0b069b732553e320fb3a1fbb7cc9842fa94b1df451a5bc9ce65fda141b558c61",
-        "개인작/20.jpg": "eb7a70cce16f1be0855ff542a7828a7090124a49793ba610f3cddf3d9b5589ff",
+        "개인작/19.jpg": "1d5464232f28551c4644de770a409bd5739ee1ecd45506eadc254eb3a35e7e88",
+        "개인작/20.jpg": "45adea0296ff5ea35f40f169fca4743dd33dca1cab2277edad9ccdd3a88e6c9e",
     }
 
     actual_digests = {

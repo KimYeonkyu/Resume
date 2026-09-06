@@ -296,7 +296,7 @@ def test_every_personal_item_navigation_reuses_the_caption_below_media_layout(
     page.locator("#gallery-grid > button").first.click()
 
     modal = page.locator("#detail-modal")
-    for artwork_number in range(1, 23):
+    for artwork_number in range(1, 24):
         assert modal.locator(".viewer-content > #modal-media-container").count() == 1
         assert modal.locator(".viewer-content > #modal-info").count() == 1
         assert modal.locator("#modal-title").inner_text() == f"개인작 {artwork_number}"
@@ -408,7 +408,7 @@ def test_viewer_constrains_an_unusually_long_caption_to_the_mobile_viewport(
 
 @pytest.mark.parametrize(
     ("category", "expected_image_count", "expected_locked_count"),
-    [("개인작", 22, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
+    [("개인작", 23, 0), ("워헤이븐", 13, 10), ("왕좌의게임", 40, 0)],
 )
 def test_existing_public_image_categories_still_load(
     page: Page,
@@ -486,7 +486,7 @@ def test_existing_public_image_categories_still_load(
         )
         page.locator("#modal-close-button").click()
 
-        for artwork_number in range(19, 23):
+        for artwork_number in range(19, 24):
             card = page.locator("#gallery-grid > button").nth(artwork_number - 1)
             card.scroll_into_view_if_needed()
             card.click()
