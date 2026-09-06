@@ -42,7 +42,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 interface DisplayManifest {
   projects: Array<{
     id: string;
-    items: Array<{ locked?: boolean; poster?: string; url?: string }>;
+    items: Array<{ id: string; locked?: boolean; poster?: string; url?: string }>;
   }>;
 }
 
@@ -212,19 +212,22 @@ describe("loopback Node portfolio integration", () => {
       projects: Array<{ id: string; items: Array<Record<string, unknown>> }>;
     };
     expect(body.authenticated).toBe(false);
+    expect(body.projects.every((project) => project.items.every((item) => item.locked !== true))).toBe(true);
+    expect(body.projects.find((project) => project.id === "warhaven")?.items).toHaveLength(23);
+    expect(body.projects.find((project) => project.id === "project-mp")?.items).toHaveLength(1);
+    expect(body.projects.find((project) => project.id === "project-dm")).toBeUndefined();
+
     const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain('"type":"locked"');
+    expect(serialized).not.toContain("비공개 작품");
     for (const project of portfolioConfiguration.projects) {
-      project.items.forEach((item, index) => {
+      for (const item of project.items) {
         const protectedItem = project.protected || ("protected" in item && item.protected === true);
-        if (!protectedItem) return;
-        expect(body.projects.find((candidate) => candidate.id === project.id)?.items[index]).toMatchObject({
-          locked: true,
-          type: "locked",
-        });
+        if (!protectedItem) continue;
         expect(serialized).not.toContain(item.sourcePath);
         if ("routeId" in item) expect(serialized).not.toContain(item.routeId);
         if ("sha256" in item) expect(serialized).not.toContain(item.sha256);
-      });
+      }
     }
     expect(serialized).not.toContain("/protected/");
   });
@@ -247,33 +250,40 @@ describe("loopback Node portfolio integration", () => {
       const authenticatedProject = authenticated.projects.find(
         (candidate) => candidate.id === project.id,
       );
-      expect(guestProject).toBeDefined();
+      const hasPublicItems = project.items.some(
+        (item) => !(project.protected || ("protected" in item && item.protected === true)),
+      );
+      expect(guestProject !== undefined).toBe(hasPublicItems);
       expect(authenticatedProject).toBeDefined();
 
-      for (const [index, item] of project.items.entries()) {
+      for (const item of project.items) {
         const selected = project.protected || ("protected" in item && item.protected === true);
+        const guestItem = guestProject?.items.find((candidate) => candidate.id === item.id);
+        const authenticatedItem = authenticatedProject?.items.find(
+          (candidate) => candidate.id === item.id,
+        );
         if (selected) {
-          expect(guestProject?.items[index]).toMatchObject({ locked: true });
+          expect(guestItem).toBeUndefined();
           if (!("routeId" in item)) throw new Error("Protected test item lacks a route ID");
-          expect(authenticatedProject?.items[index].url).toBe(`/protected/${item.routeId}`);
+          expect(authenticatedItem?.url).toBe(`/protected/${item.routeId}`);
           continue;
         }
 
         const expectedUrl = await expectedPublicAssetUrl(item.sourcePath);
-        expect(guestProject?.items[index].url).toBe(expectedUrl);
-        expect(authenticatedProject?.items[index].url).toBe(expectedUrl);
+        expect(guestItem?.url).toBe(expectedUrl);
+        expect(authenticatedItem?.url).toBe(expectedUrl);
         const staticProject = committedPublicManifest.projects.find(
           (candidate) => candidate.id === project.id,
         );
-        const staticItem = staticProject?.items[index];
+        const staticItem = staticProject?.items.find((candidate) => candidate.id === item.id);
         if (!staticItem || !("url" in staticItem)) {
           throw new Error("Committed public manifest lacks a configured public item");
         }
         expect(expectedUrl).toBe(`/${staticItem.url}`);
         if ("posterPath" in item) {
           const expectedPoster = await expectedPublicAssetUrl(item.posterPath);
-          expect(guestProject?.items[index].poster).toBe(expectedPoster);
-          expect(authenticatedProject?.items[index].poster).toBe(expectedPoster);
+          expect(guestItem?.poster).toBe(expectedPoster);
+          expect(authenticatedItem?.poster).toBe(expectedPoster);
           if (!("poster" in staticItem)) {
             throw new Error("Committed public manifest lacks a configured public poster");
           }

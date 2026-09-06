@@ -434,8 +434,24 @@ def test_project_dm_manifest_matches_owner_selected_items_and_replacement() -> N
     }
 
 
+def test_all_warhaven_artwork_is_public_and_repository_backed() -> None:
+    project = next(project for project in CONFIGURATION["projects"] if project["id"] == "warhaven")
+    excluded_files = set(CONFIGURATION["deploymentExclusions"]["files"])
+
+    assert project["protected"] is False
+    assert len(project["items"]) == 23
+    assert [item["title"] for item in project["items"]] == [f"{number:02d}" for number in range(1, 24)]
+    for item in project["items"]:
+        assert item.get("protected") is not True
+        assert "routeId" not in item
+        assert "sha256" not in item
+        assert "contentType" not in item
+        assert item["sourcePath"] not in excluded_files
+        assert (REPO_ROOT / item["sourcePath"]).is_file(), item["sourcePath"]
+
+
 def test_public_repository_tree_contains_no_protected_source_media() -> None:
-    assert len(protected_items()) == 27
+    assert len(protected_items()) == 17
     for item in protected_items():
         assert not (REPO_ROOT / item["sourcePath"]).exists(), item["sourcePath"]
     for file_name in CONFIGURATION["deploymentExclusions"]["files"]:

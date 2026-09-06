@@ -153,25 +153,20 @@ export function isLegacyProtectedPath(pathname: string): boolean {
 export function projectManifest(authenticated: boolean) {
   return {
     authenticated,
-    projects: manifest.projects.map((project) => {
-      const itemProtection = project.items.map((item) => itemIsProtected(project, item));
-      const hasProtectedItems = itemProtection.some(Boolean);
-      return {
+    projects: manifest.projects.flatMap((project) => {
+      const visibleItems = authenticated
+        ? project.items
+        : project.items.filter((item) => !itemIsProtected(project, item));
+      if (visibleItems.length === 0) return [];
+      const hasProtectedItems = visibleItems.some((item) => itemIsProtected(project, item));
+      return [{
         id: project.id,
         title: project.title,
         protected: hasProtectedItems,
-        locked: hasProtectedItems && !authenticated,
-        itemCount: project.items.length,
-        items: project.items.map((item, index) => {
-          if (itemProtection[index]) {
-            if (!authenticated) {
-              return {
-                id: `locked-${project.id}-${index + 1}`,
-                title: "비공개 작품",
-                type: "locked",
-                locked: true,
-              };
-            }
+        locked: false,
+        itemCount: visibleItems.length,
+        items: visibleItems.map((item) => {
+          if (itemIsProtected(project, item)) {
             const protectedMedia = protectedItem(item);
             if (!protectedMedia) throw new Error("Invalid protected portfolio manifest item");
             return {
@@ -195,7 +190,7 @@ export function projectManifest(authenticated: boolean) {
             ...("posterPath" in item ? { poster: publicAssetUrl(item.posterPath) } : {}),
           };
         }),
-      };
+      }];
     }),
   };
 }

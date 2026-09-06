@@ -66,23 +66,24 @@ async function currentPublicMediaVersions(): Promise<Record<string, string>> {
 }
 
 describe("static public portfolio manifest", () => {
-  it("keeps public items usable while replacing every selected item with a safe placeholder", async () => {
+  it("shows only public work without guest-visible lock placeholders", async () => {
     const versions = await currentPublicMediaVersions();
     const manifest = createPublicPortfolioManifest(configuration, versions);
     const warhaven = manifest.projects.find((project) => project.id === "warhaven");
     const mp = manifest.projects.find((project) => project.id === "project-mp");
     const dm = manifest.projects.find((project) => project.id === "project-dm");
 
-    expect(warhaven?.items[10]).toMatchObject({ id: "warhaven-11", type: "image" });
-    expect(warhaven?.items[11]).toMatchObject({ locked: true, type: "locked" });
-    expect(warhaven?.items[20]).toMatchObject({ id: "warhaven-21", type: "image" });
-    expect(warhaven?.items[21]).toMatchObject({ locked: true, type: "locked" });
-    expect(warhaven?.items[22]).toMatchObject({ id: "warhaven-23", type: "image" });
+    expect(warhaven?.items).toHaveLength(23);
+    expect(warhaven?.items.every((item) => item.type === "image" && item.locked !== true)).toBe(true);
+    expect(mp?.items).toHaveLength(1);
     expect(mp?.items[0]).toMatchObject({ id: "project-mp-24", type: "image" });
-    expect(mp?.items.slice(1).every((item) => item.locked === true)).toBe(true);
-    expect(dm?.items.every((item) => item.locked === true)).toBe(true);
+    expect(dm).toBeUndefined();
+    expect(manifest.projects.every((project) => project.protected === false && project.locked === false))
+      .toBe(true);
 
     const serialized = JSON.stringify(manifest);
+    expect(serialized).not.toContain('"type":"locked"');
+    expect(serialized).not.toContain("비공개 작품");
     for (const project of configuration.projects) {
       for (const item of project.items) {
         const selected = project.protected || ("protected" in item && item.protected === true);

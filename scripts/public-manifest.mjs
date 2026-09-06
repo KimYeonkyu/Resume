@@ -512,37 +512,27 @@ export function createPublicPortfolioManifest(configuration, mediaVersions) {
   validatePublicMediaVersions(configuration, mediaVersions);
   return {
     authenticated: false,
-    projects: configuration.projects.map((project) => {
-      const itemProtection = project.items.map((item) => itemIsProtected(project, item));
-      const hasProtectedItems = itemProtection.some(Boolean);
-      return {
+    projects: configuration.projects.flatMap((project) => {
+      const publicItems = project.items.filter((item) => !itemIsProtected(project, item));
+      if (publicItems.length === 0) return [];
+      return [{
         id: project.id,
         title: project.title,
-        protected: hasProtectedItems,
-        locked: hasProtectedItems,
-        itemCount: project.items.length,
-        items: project.items.map((item, index) => {
-          if (itemProtection[index]) {
-            return {
-              id: `locked-${project.id}-${index + 1}`,
-              title: "비공개 작품",
-              type: "locked",
-              locked: true,
-            };
-          }
-          return {
-            id: item.id,
-            title: item.title,
-            category: project.title,
-            type: item.type,
-            description: item.description ?? `${project.title} · ${item.title}`,
-            url: versionedRelativeUrl(item.sourcePath, mediaVersions),
-            ...(item.posterPath
-              ? { poster: versionedRelativeUrl(item.posterPath, mediaVersions) }
-              : {}),
-          };
-        }),
-      };
+        protected: false,
+        locked: false,
+        itemCount: publicItems.length,
+        items: publicItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: project.title,
+          type: item.type,
+          description: item.description ?? `${project.title} · ${item.title}`,
+          url: versionedRelativeUrl(item.sourcePath, mediaVersions),
+          ...(item.posterPath
+            ? { poster: versionedRelativeUrl(item.posterPath, mediaVersions) }
+            : {}),
+        })),
+      }];
     }),
   };
 }

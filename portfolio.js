@@ -62,6 +62,7 @@ const elements = {
     artworkCount: document.querySelector('#artwork-count'),
     galleryGrid: document.querySelector('#gallery-grid'),
     galleryError: document.querySelector('#gallery-error'),
+    confidentialNotice: document.querySelector('#confidential-notice'),
     accessStatus: document.querySelector('#access-status'),
     relockButton: document.querySelector('#relock-button'),
     detailModal: document.querySelector('#detail-modal'),
@@ -377,6 +378,7 @@ function showGallery(manifest) {
     elements.galleryShell.hidden = false;
     elements.accessStatus.textContent = manifest.authenticated ? '면접용 전체 보기' : '공개 보기';
     elements.relockButton.hidden = !manifest.authenticated;
+    elements.confidentialNotice.hidden = manifest.authenticated;
     elements.passwordInput.value = '';
     elements.loginError.textContent = '';
     elements.entranceStatus.textContent = '';

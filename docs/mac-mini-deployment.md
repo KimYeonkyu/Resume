@@ -137,7 +137,7 @@ From the canonical HTTPS hostname, verify:
 
 1. `/` and `/jin_kim_portfolio.html` return `200` with HSTS, CSP, CORP, `nosniff`, frame denial, and the expected public bytes.
 2. `/api/auth/session` returns an unauthenticated state before login.
-3. `/api/projects?mode=public` contains locked placeholders and no `sourcePath`, `sha256`, `routeId`, or `/protected/` locator for selected items.
+3. `/api/projects?mode=public` contains only public items, omits protected-only projects, and exposes no lock placeholders, hidden counts, `sourcePath`, `sha256`, `routeId`, or `/protected/` locator.
 4. Direct unauthenticated `GET` and `HEAD /protected/<opaque-id>` return `401` and no media.
 5. Wrong-origin, wrong-host, or non-HTTPS-forwarded login requests fail and issue no cookie.
 6. A correct browser login issues `__Host-portfolio_session` with `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, and no `Domain`.

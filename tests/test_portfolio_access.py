@@ -10,6 +10,7 @@ import threading
 from collections.abc import Iterator
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any
 from urllib.parse import unquote, urlsplit
 
 import pytest
@@ -96,49 +97,46 @@ def install_static_github_pages(page: Page) -> list[str]:
     return requests
 
 
-def guest_manifest() -> dict[str, object]:
-    projects: list[dict[str, object]] = [
-        {
-            "id": "personal",
-            "title": "개인작",
-            "protected": False,
-            "locked": False,
-            "itemCount": 1,
-            "items": [
-                {
-                    "id": "personal-01",
-                    "title": "1",
-                    "category": "개인작",
-                    "type": "image",
-                    "description": "개인작 · 1",
-                    "url": "/%EA%B0%9C%EC%9D%B8%EC%9E%91/1.jpg",
-                }
-            ],
-        }
-    ]
-    for project_id, title, count in (
-        ("project-mp", "Project MP", 6),
-        ("project-dm", "Project DM", 12),
-    ):
-        projects.append(
+def guest_manifest() -> dict[str, Any]:
+    return {
+        "authenticated": False,
+        "projects": [
             {
-                "id": project_id,
-                "title": title,
-                "protected": True,
-                "locked": True,
-                "itemCount": count,
+                "id": "personal",
+                "title": "개인작",
+                "protected": False,
+                "locked": False,
+                "itemCount": 1,
                 "items": [
                     {
-                        "id": f"locked-{project_id}-{index}",
-                        "title": "비공개 작품",
-                        "type": "locked",
-                        "locked": True,
+                        "id": "personal-01",
+                        "title": "1",
+                        "category": "개인작",
+                        "type": "image",
+                        "description": "개인작 · 1",
+                        "url": "/%EA%B0%9C%EC%9D%B8%EC%9E%91/1.jpg",
                     }
-                    for index in range(1, count + 1)
                 ],
-            }
-        )
-    return {"authenticated": False, "projects": projects}
+            },
+            {
+                "id": "project-mp",
+                "title": "Project MP",
+                "protected": False,
+                "locked": False,
+                "itemCount": 1,
+                "items": [
+                    {
+                        "id": "project-mp-24",
+                        "title": "Project MP · 24",
+                        "category": "Project MP",
+                        "type": "image",
+                        "description": "Project MP · 24",
+                        "url": "/project%20MP/24.jpg",
+                    }
+                ],
+            },
+        ],
+    }
 
 
 def install_guest_api(page: Page) -> list[str]:
@@ -165,31 +163,55 @@ def install_guest_api(page: Page) -> list[str]:
     return protected_requests
 
 
-def authenticated_manifest(protected_urls: dict[str, list[str]]) -> dict[str, object]:
-    projects = list(guest_manifest()["projects"])
-    projects = [project for project in projects if not project["protected"]]
-    for project_id, title in (("project-mp", "Project MP"), ("project-dm", "Project DM")):
-        urls = protected_urls[project_id]
-        projects.append(
-            {
-                "id": project_id,
-                "title": title,
-                "protected": True,
-                "locked": False,
-                "itemCount": len(urls),
-                "items": [
-                    {
-                        "id": f"{project_id}-display-{index}",
-                        "title": f"{title} · {index:02d}",
-                        "category": title,
-                        "type": "image",
-                        "description": f"{title} · 보호된 작품",
-                        "url": url,
-                    }
-                    for index, url in enumerate(urls, start=1)
-                ],
-            }
-        )
+def authenticated_manifest(protected_urls: dict[str, list[str]]) -> dict[str, Any]:
+    guest_projects = list(guest_manifest()["projects"])
+    public_mp = next(project for project in guest_projects if project["id"] == "project-mp")
+    projects = [project for project in guest_projects if project["id"] != "project-mp"]
+
+    mp_items = list(public_mp["items"])
+    mp_items.extend(
+        {
+            "id": f"project-mp-display-{number}",
+            "title": f"Project MP · {number}",
+            "category": "Project MP",
+            "type": "image",
+            "description": "Project MP · 보호된 작품",
+            "url": url,
+        }
+        for number, url in zip(range(25, 30), protected_urls["project-mp"], strict=True)
+    )
+    projects.append(
+        {
+            "id": "project-mp",
+            "title": "Project MP",
+            "protected": True,
+            "locked": False,
+            "itemCount": len(mp_items),
+            "items": mp_items,
+        }
+    )
+
+    dm_urls = protected_urls["project-dm"]
+    projects.append(
+        {
+            "id": "project-dm",
+            "title": "Project DM",
+            "protected": True,
+            "locked": False,
+            "itemCount": len(dm_urls),
+            "items": [
+                {
+                    "id": f"project-dm-display-{index}",
+                    "title": f"Project DM · {index:02d}",
+                    "category": "Project DM",
+                    "type": "image",
+                    "description": "Project DM · 보호된 작품",
+                    "url": url,
+                }
+                for index, url in enumerate(dm_urls, start=1)
+            ],
+        }
+    )
     return {"authenticated": True, "projects": projects}
 
 
@@ -205,7 +227,7 @@ def install_interview_api(
 ) -> dict[str, object]:
     session_value = secrets.token_hex(24)
     protected_urls = {
-        "project-mp": [f"/protected/{secrets.token_hex(10)}" for _ in range(6)],
+        "project-mp": [f"/protected/{secrets.token_hex(10)}" for _ in range(5)],
         "project-dm": [f"/protected/{secrets.token_hex(10)}" for _ in range(12)],
     }
     all_protected_urls = {
@@ -386,9 +408,21 @@ def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: 
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
-    for title, locked_count in (("워헤이븐", 10), ("Project MP", 5), ("Project DM", 12)):
-        page.get_by_role("button", name=title, exact=True).click()
-        assert page.locator('#gallery-grid [data-locked="true"]').count() == locked_count
+    category_titles = page.locator("#category-tabs .category-tab").all_text_contents()
+    assert "Project DM" not in category_titles
+
+    page.get_by_role("button", name="워헤이븐", exact=True).click()
+    assert page.locator("#gallery-grid img").count() == 23
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+
+    page.get_by_role("button", name="Project MP", exact=True).click()
+    assert page.locator("#gallery-grid img").count() == 1
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+    assert page.locator("#category-tabs .tab-lock").count() == 0
+    assert page.get_by_text(
+        "일부 미공개 프로젝트 및 제작 과정은 보안상 공개하지 않으며, 면접 일정이 확정된 담당자에게 별도로 공유드립니다.",
+        exact=True,
+    ).is_visible()
 
     page.get_by_role("button", name="개인작", exact=True).click()
     personal_16 = urlsplit(
@@ -754,7 +788,9 @@ def test_public_query_overrides_authenticated_interview_mode(
 
     assert page.locator("#access-status").text_content() == "공개 보기"
     page.get_by_role("button", name="Project MP", exact=True).click()
-    assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
+    assert page.locator("#gallery-grid img").count() == 1
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+    assert "Project DM" not in page.locator("#category-tabs .category-tab").all_text_contents()
     assert calls["projects_authenticated"] == 0
 
 
@@ -783,7 +819,7 @@ def test_interview_query_overrides_persisted_public_mode(
     assert calls["projects_authenticated"] == 1
 
 
-def test_guest_protected_categories_are_dark_locked_and_request_no_media(
+def test_guest_hides_confidential_work_and_requests_no_protected_media(
     page: Page, portfolio_url: str
 ) -> None:
     protected_requests = install_guest_api(page)
@@ -792,22 +828,14 @@ def test_guest_protected_categories_are_dark_locked_and_request_no_media(
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
 
-    for title, count in (("Project MP", 6), ("Project DM", 12)):
-        page.get_by_role("button", name=title, exact=True).click()
-        cards = page.locator('#gallery-grid [data-locked="true"]')
-        assert cards.count() == count
-        assert all(card.get_attribute("aria-disabled") == "true" for card in cards.all())
-        assert page.get_by_role("button", name=title, exact=True).get_attribute(
-            "aria-description"
-        ) == "잠김"
-        assert title in (cards.first.get_attribute("aria-label") or "")
-        assert cards.first.get_by_text("Interview Access Only", exact=True).is_visible()
-        red, green, blue = cards.first.evaluate(
-            "element => getComputedStyle(element).backgroundColor.match(/\\d+/g).slice(0, 3).map(Number)"
-        )
-        assert max(red, green, blue) <= 30
-        cards.first.click(force=True)
-        assert page.locator("#detail-modal").is_hidden()
+    category_titles = page.locator("#category-tabs .category-tab").all_text_contents()
+    assert "Project MP" in category_titles
+    assert "Project DM" not in category_titles
+    page.get_by_role("button", name="Project MP", exact=True).click()
+    assert page.locator("#gallery-grid img").count() == 1
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+    assert page.locator("#category-tabs .tab-lock").count() == 0
+    assert page.locator("#confidential-notice").is_visible()
 
     assert protected_requests == []
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
@@ -830,13 +858,14 @@ def test_interview_form_enter_unlocks_both_projects_once(
     page.get_by_label("비밀번호").press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     assert calls["login"] == 1
+    assert page.locator("#confidential-notice").is_hidden()
 
     for title, count in (("Project MP", 6), ("Project DM", 12)):
         page.get_by_role("button", name=title, exact=True).click()
         cards = page.locator("#gallery-grid > button")
         assert cards.count() == count
         assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
-        cards.first.click()
+        (cards.last if title == "Project MP" else cards.first).click()
         assert page.locator("#detail-modal").is_visible()
         viewer_image = page.locator("#modal-media-container img")
         viewer_image.wait_for(state="visible")
@@ -886,7 +915,7 @@ def test_manual_relock_discards_protected_dom_and_returns_to_guest(
     page.get_by_label("비밀번호").press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     page.get_by_role("button", name="Project MP", exact=True).click()
-    assert page.locator('[src*="/protected/"]').count() == 6
+    assert page.locator('[src*="/protected/"]').count() == 5
     page.locator('#gallery-grid img').evaluate_all(
         "images => images.forEach(image => image.loading = 'eager')"
     )
@@ -901,7 +930,9 @@ def test_manual_relock_discards_protected_dom_and_returns_to_guest(
     page.get_by_role("button", name="Project MP", exact=True).click()
 
     assert calls["logout"] == 1
-    assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
+    assert page.locator("#gallery-grid img").count() == 1
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+    assert "Project DM" not in page.locator("#category-tabs .category-tab").all_text_contents()
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
     assert protected_calls == []
 
@@ -921,7 +952,7 @@ def test_successful_relock_discards_protected_dom_before_public_manifest_returns
     page.get_by_label("비밀번호").press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     page.get_by_role("button", name="Project MP", exact=True).click()
-    assert page.locator('[src*="/protected/"]').count() == 6
+    assert page.locator('[src*="/protected/"]').count() == 5
 
     page.get_by_role("button", name="다시 잠그기", exact=True).click()
     page.wait_for_function(
@@ -1044,7 +1075,8 @@ def test_explicit_public_choice_wins_a_delayed_authenticated_restore(
     assert calls["projects_authenticated"] == 0
     assert page.locator("#access-status").text_content() == "공개 보기"
     page.get_by_role("button", name="Project MP", exact=True).click()
-    assert page.locator('#gallery-grid [data-locked="true"]').count() == 6
+    assert page.locator("#gallery-grid img").count() == 1
+    assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
     assert calls["protected"] == []
 
 
@@ -1464,8 +1496,8 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     page.get_by_label("비밀번호").press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     page.get_by_role("button", name="Project MP", exact=True).click()
-    assert page.locator('[src*="/protected/"]').count() == 6
-    page.locator("#gallery-grid .artwork-card").first.click()
+    assert page.locator('[src*="/protected/"]').count() == 5
+    page.locator("#gallery-grid .artwork-card").last.click()
     page.locator("#detail-modal").wait_for(state="visible")
     assert page.locator("#modal-title").text_content()
 
@@ -1473,7 +1505,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     contact_page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     contact_page.locator("#gallery-shell").wait_for(state="visible")
     contact_page.get_by_role("button", name="Project MP", exact=True).click()
-    contact_source = contact_page.locator("#gallery-grid .artwork-card").first
+    contact_source = contact_page.locator("#gallery-grid .artwork-card").last
     contact_source.focus()
     contact_page.evaluate("() => document.querySelector('#contact-button').click()")
     contact_page.locator("#contact-modal").wait_for(state="visible")
@@ -1497,7 +1529,7 @@ def test_logout_intent_purges_protected_dom_from_every_open_tab_before_response(
     relock_page.goto(f"{portfolio_url}?mode=interview", wait_until="domcontentloaded")
     relock_page.locator("#gallery-shell").wait_for(state="visible")
     relock_page.get_by_role("button", name="Project MP", exact=True).click()
-    assert relock_page.locator('[src*="/protected/"]').count() == 6
+    assert relock_page.locator('[src*="/protected/"]').count() == 5
 
     relock_page.get_by_role("button", name="다시 잠그기", exact=True).click()
     for _ in range(50):
