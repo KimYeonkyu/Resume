@@ -26,6 +26,7 @@ SESSION_LOCK_WAIT_TIMEOUT_MS = 30_000
 SESSION_INTENT_STORAGE_KEY = "jin-kim-portfolio-session-intent"
 SESSION_INTENT_CHANNEL_NAME = "jin-kim-portfolio-session-intent"
 ACCESS_MODE_KEY = "portfolio-access-mode"
+PROFILE_IMAGE_DIGEST = "4a8ff9171d43f9ea635c1609078b45115c6f2c469e301551e01570c246f5c5ee"
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -1039,6 +1040,65 @@ def test_gallery_entry_moves_focus_to_a_real_heading(page: Page, portfolio_url: 
     assert heading.is_visible()
     page.wait_for_function("document.querySelector('#gallery-title') === document.activeElement")
     assert heading.evaluate("element => element === document.activeElement")
+    assert heading.get_attribute("tabindex") == "-1"
+    assert heading.evaluate(
+        """element => {
+            const style = getComputedStyle(element);
+            return { style: style.outlineStyle, width: style.outlineWidth };
+        }"""
+    ) == {"style": "none", "width": "0px"}
+
+
+def test_post_entry_header_uses_content_addressed_profile_image_in_compact_circle(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.mouse.click(20, 20)
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    image = page.locator(".site-header img.avatar")
+    assert image.count() == 1
+    assert image.get_attribute("src") == (
+        f"./jin-kim-profile.png?v={PROFILE_IMAGE_DIGEST}"
+    )
+    page.wait_for_function(
+        """() => {
+            const image = document.querySelector('.site-header img.avatar');
+            return image?.complete && image.naturalWidth > 0;
+        }"""
+    )
+    metrics = image.evaluate(
+        """element => {
+            const bounds = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return {
+                naturalWidth: element.naturalWidth,
+                naturalHeight: element.naturalHeight,
+                renderedWidth: bounds.width,
+                renderedHeight: bounds.height,
+                borderRadius: style.borderRadius,
+            };
+        }"""
+    )
+    assert metrics == {
+        "naturalWidth": 144,
+        "naturalHeight": 144,
+        "renderedWidth": 46,
+        "renderedHeight": 46,
+        "borderRadius": "50%",
+    }
+
+
+def test_post_entry_header_omits_redundant_artist_role(
+    page: Page, portfolio_url: str
+) -> None:
+    install_guest_api(page)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    page.mouse.click(20, 20)
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    assert page.locator("#gallery-shell .artist-role").count() == 0
 
 
 def test_wrong_password_stays_locked_with_generic_error(

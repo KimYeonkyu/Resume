@@ -219,6 +219,22 @@ def test_portfolio_stylesheet_url_is_bound_to_its_content_digest() -> None:
     assert f'href="./portfolio.css?v={stylesheet_digest}"' in published
 
 
+def test_profile_image_is_copied_to_public_build_with_approved_bytes() -> None:
+    expected_digest = "4a8ff9171d43f9ea635c1609078b45115c6f2c469e301551e01570c246f5c5ee"
+    source = REPO_ROOT / "jin-kim-profile.png"
+    assert source.is_file()
+    source_bytes = source.read_bytes()
+    assert len(source_bytes) == 20_828
+    assert hashlib.sha256(source_bytes).hexdigest() == expected_digest
+
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+    published = DIST / source.name
+    assert published.is_file()
+    assert published.read_bytes() == source_bytes
+    assert hashlib.sha256(published.read_bytes()).hexdigest() == expected_digest
+
+
 def test_resume_nypc_result_link_opens_the_attached_public_pdf() -> None:
     expected_digest = "a2aa4c70ab62756bc0c1bb544d5c5561552fe3e21e99baca32d3fee3afa308cb"
     source = (REPO_ROOT / "index.html").read_text(encoding="utf-8")
