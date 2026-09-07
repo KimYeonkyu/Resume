@@ -375,7 +375,8 @@ function showGallery(manifest) {
     state.currentProjectId = state.projects[0]?.id ?? null;
     elements.entrance.hidden = true;
     elements.galleryShell.hidden = false;
-    elements.accessStatus.textContent = manifest.authenticated ? '면접용 전체 보기' : '공개 보기';
+    elements.accessStatus.textContent = manifest.authenticated ? '면접용 전체 보기' : '';
+    elements.accessStatus.hidden = !manifest.authenticated;
     elements.relockButton.hidden = !manifest.authenticated;
     elements.passwordInput.value = '';
     elements.loginError.textContent = '';

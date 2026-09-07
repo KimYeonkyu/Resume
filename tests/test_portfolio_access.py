@@ -62,6 +62,13 @@ def page() -> Iterator[Page]:
         browser.close()
 
 
+def assert_public_access_status_absent(page: Page) -> None:
+    access_status = page.locator("#access-status")
+    assert access_status.text_content() == ""
+    assert access_status.evaluate("element => element.hidden") is True
+    assert page.get_by_text("공개 보기", exact=True).count() == 0
+
+
 def install_static_github_pages(page: Page) -> list[str]:
     requests: list[str] = []
     root = STATIC_ROOT.resolve()
@@ -637,7 +644,7 @@ def test_short_entrance_keeps_full_artwork_and_identity_reachable(
 
     page.mouse.click(width / 2, height / 2)
     page.locator("#gallery-shell").wait_for(state="visible")
-    assert page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(page)
 
 
 def test_short_entrance_supports_real_touch_swipe(
@@ -704,7 +711,9 @@ def test_clicking_anywhere_on_cover_enters_public_portfolio(
 
     page.mouse.click(20, 20)
     page.locator("#gallery-shell").wait_for(state="visible")
-    assert page.locator("#access-status").text_content() == "공개 보기"
+
+    assert_public_access_status_absent(page)
+    expect(page.get_by_role("button", name="Contact", exact=True)).to_be_enabled()
 
 
 def test_cover_click_keeps_pending_logout_status_empty(
@@ -809,7 +818,7 @@ def test_public_query_overrides_authenticated_interview_mode(
     page.goto(f"{portfolio_url}?mode=public", wait_until="domcontentloaded")
     page.locator("#gallery-shell").wait_for(state="visible")
 
-    assert page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(page)
     page.get_by_role("button", name="Project MP", exact=True).click()
     assert page.locator("#gallery-grid img").count() == 1
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
@@ -1003,7 +1012,7 @@ def test_successful_relock_discards_protected_dom_before_public_manifest_returns
     assert isinstance(delayed_manifest, Route)
     delayed_manifest.fulfill(status=200, json=guest_manifest())
     page.locator("#gallery-shell").wait_for(state="visible")
-    assert page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(page)
 
 
 def test_failed_relock_purges_dom_and_warns_that_server_access_remains_active(
@@ -1148,7 +1157,7 @@ def test_explicit_public_choice_wins_a_delayed_authenticated_restore(
     page.wait_for_function("typeof window.__releaseDelayedSession === 'function'")
     page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
-    assert page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(page)
     assert calls["logout"] == 1
     assert all(
         cookie.get("name") != "browser_session"
@@ -1159,7 +1168,7 @@ def test_explicit_public_choice_wins_a_delayed_authenticated_restore(
     page.wait_for_timeout(300)
 
     assert calls["projects_authenticated"] == 0
-    assert page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(page)
     page.get_by_role("button", name="Project MP", exact=True).click()
     assert page.locator("#gallery-grid img").count() == 1
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
@@ -1357,7 +1366,7 @@ def test_delayed_login_in_one_tab_finishes_before_newer_logout_in_another(
     )
     assert session == {"authenticated": False}
     assert protected_status == 401
-    assert public_page.locator("#access-status").text_content() == "공개 보기"
+    assert_public_access_status_absent(public_page)
     assert page.locator("#gallery-shell").is_hidden()
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
 
@@ -1462,7 +1471,7 @@ def test_newer_logout_supersedes_login_queued_behind_an_older_logout(
             '[src*="/protected/"], [poster*="/protected/"]'
         ).count() == 0
         if candidate.locator("#gallery-shell").is_visible():
-            assert candidate.locator("#access-status").text_content() == "공개 보기"
+            assert_public_access_status_absent(candidate)
 
 
 def test_logout_registers_web_lock_before_publishing_cross_tab_intent(
