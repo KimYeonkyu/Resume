@@ -212,7 +212,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
     thumbnail = cards.locator("video")
     assert thumbnail.count() == 1
-    assert cards.first.locator(".artwork-label").inner_text() == "DoMiniOnion Trailer"
+    assert cards.first.locator(".artwork-label").inner_text() == "DOMINIONION TRAILER"
     assert thumbnail.evaluate("video => new URL(video.src).pathname") == VIDEO_PATH
     assert thumbnail.evaluate("video => new URL(video.src).searchParams.get('v')") == asset_version(
         VIDEO_SOURCE_PATH
@@ -233,7 +233,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     assert modal.get_attribute("role") == "dialog"
     assert modal.get_attribute("aria-modal") == "true"
     assert modal.locator("#modal-info").is_visible()
-    assert modal.locator("#modal-title").inner_text() == "두미니어니언 DoMiniOnion Trailer"
+    assert modal.locator("#modal-title").inner_text() == "두미니어니언 DOMINIONION TRAILER"
     assert not modal.locator("#modal-media-container").evaluate(
         "element => element.classList.contains('viewer-media--captionless')"
     )
@@ -360,8 +360,10 @@ def test_viewer_identity_deduplicates_case_and_supported_category_boundaries(
 
     expected = ["project mp", "Project MP•24", "Project MP / 28", "Project MP 27"]
     for index, caption in enumerate(expected):
-        assert page.locator("#modal-title").inner_text() == caption
-        assert page.locator("#modal-info").inner_text().casefold().count("project mp") == 1
+        assert page.locator("#modal-title").text_content() == caption
+        modal_info_source = page.locator("#modal-info").text_content()
+        assert modal_info_source is not None
+        assert modal_info_source.casefold().count("project mp") == 1
         if index + 1 < len(expected):
             page.locator("#next-button").click()
 
@@ -393,7 +395,7 @@ def test_image_hides_caption_and_video_preserves_it_at_key_viewports(
 
     page.get_by_role("button", name="두미니어니언", exact=True).click()
     page.locator("#gallery-grid > button").click()
-    assert page.locator("#modal-title").inner_text() == "두미니어니언 DoMiniOnion Trailer"
+    assert page.locator("#modal-title").inner_text() == "두미니어니언 DOMINIONION TRAILER"
     assert_caption_below_rendered_media(page)
     assert_media_and_caption_group_is_vertically_centered(page)
     assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")

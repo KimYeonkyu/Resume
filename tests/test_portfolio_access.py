@@ -27,6 +27,8 @@ SESSION_INTENT_STORAGE_KEY = "jin-kim-portfolio-session-intent"
 SESSION_INTENT_CHANNEL_NAME = "jin-kim-portfolio-session-intent"
 ACCESS_MODE_KEY = "portfolio-access-mode"
 PROFILE_IMAGE_DIGEST = "4a8ff9171d43f9ea635c1609078b45115c6f2c469e301551e01570c246f5c5ee"
+DDIN_FONT_DIGEST = "02f4857e115e978480bac95274382a13ad1915e5ed828d065f07ecedccab50fc"
+DDIN_FONT_PATH = "/fonts/D-DINCondensed.otf"
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -78,9 +80,11 @@ def install_static_github_pages(page: Page) -> list[str]:
         ".js": "text/javascript; charset=utf-8",
         ".json": "application/json; charset=utf-8",
         ".jpg": "image/jpeg",
+        ".otf": "font/otf",
         ".webp": "image/webp",
         ".mp4": "video/mp4",
         ".pdf": "application/pdf",
+        ".txt": "text/plain; charset=utf-8",
     }
 
     def route_static(route: Route) -> None:
@@ -147,8 +151,11 @@ def guest_manifest() -> dict[str, Any]:
     }
 
 
-def install_guest_api(page: Page) -> list[str]:
+def install_guest_api(
+    page: Page, manifest: dict[str, Any] | None = None
+) -> list[str]:
     protected_requests: list[str] = []
+    public_manifest = manifest if manifest is not None else guest_manifest()
 
     def route_api(route: Route) -> None:
         path = route.request.url.split("?", 1)[0]
@@ -157,7 +164,7 @@ def install_guest_api(page: Page) -> list[str]:
         elif path.endswith("/api/auth/logout"):
             route.fulfill(status=204)
         elif path.endswith("/api/projects"):
-            route.fulfill(status=200, json=guest_manifest())
+            route.fulfill(status=200, json=public_manifest)
         else:
             route.fulfill(status=404, json={"error": "Not found"})
 
@@ -608,6 +615,135 @@ def test_entrance_uses_full_width_attached_artwork_and_exact_identity(
 
     assert page.get_by_role("button", name="공개 포트폴리오", exact=True).is_visible()
     assert page.locator("#gallery-shell").is_hidden()
+
+
+def test_portfolio_loads_ddin_and_visually_uppercases_mixed_latin_ui(
+    page: Page, portfolio_url: str
+) -> None:
+    manifest = guest_manifest()
+    project = next(
+        candidate for candidate in manifest["projects"] if candidate["id"] == "project-mp"
+    )
+    project["title"] = "Project Mixed 한글"
+    project["items"][0].update(
+        {
+            "title": "Mixed Modal 한글",
+            "category": "Project Mixed 한글",
+            "type": "video",
+        }
+    )
+    install_guest_api(page, manifest)
+    font_responses = []
+    page.on(
+        "response",
+        lambda response: font_responses.append(response)
+        if DDIN_FONT_PATH in urlsplit(response.url).path
+        else None,
+    )
+
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+    font_state = page.evaluate(
+        """async () => {
+            const faces = await document.fonts.load('16px "D-DIN Condensed"', 'Portfolio');
+            await document.fonts.ready;
+            return {
+                check: document.fonts.check('16px "D-DIN Condensed"', 'Portfolio'),
+                count: faces.length,
+                status: document.fonts.status,
+            };
+        }"""
+    )
+
+    def typography_snapshot(selector: str) -> dict[str, str]:
+        return page.locator(selector).evaluate(
+            """element => ({
+                family: getComputedStyle(element).fontFamily,
+                rendered: element.innerText,
+                source: element.textContent,
+                transform: getComputedStyle(element).textTransform,
+            })"""
+        )
+
+    typography_samples = {
+        "entrance": typography_snapshot(".entrance-identity p"),
+    }
+    page.get_by_role("button", name="공개 포트폴리오", exact=True).press("Enter")
+    page.locator("#gallery-shell").wait_for(state="visible")
+    typography_samples.update(
+        {
+            "header": typography_snapshot("#gallery-title"),
+            "button": typography_snapshot("#contact-button"),
+            "tab": typography_snapshot("#category-tabs .category-tab:nth-child(2)"),
+        }
+    )
+    page.get_by_role("button", name="Project Mixed 한글", exact=True).click()
+    video_card = page.locator("#gallery-grid .artwork-card")
+    typography_samples["card"] = typography_snapshot("#gallery-grid .artwork-label")
+    video_card.click()
+    page.locator("#detail-modal").wait_for(state="visible")
+    typography_samples["detail-modal"] = typography_snapshot("#modal-title")
+    page.get_by_role("button", name="상세 이미지 닫기").click()
+    page.locator("#contact-button").click()
+    page.locator("#contact-modal").wait_for(state="visible")
+    typography_samples["contact-modal"] = typography_snapshot("#contact-title")
+    typography_samples["contact-link"] = typography_snapshot("#contact-modal a")
+
+    expected_text = {
+        "entrance": ("Environment concept artist", "ENVIRONMENT CONCEPT ARTIST"),
+        "header": ("Jin Kim Portfolio", "JIN KIM PORTFOLIO"),
+        "button": ("Contact", "CONTACT"),
+        "tab": ("Project Mixed 한글", "PROJECT MIXED 한글"),
+        "card": ("Mixed Modal 한글", "MIXED MODAL 한글"),
+        "detail-modal": (
+            "Project Mixed 한글 Mixed Modal 한글",
+            "PROJECT MIXED 한글 MIXED MODAL 한글",
+        ),
+        "contact-modal": ("Get in Touch", "GET IN TOUCH"),
+        "contact-link": ("jinkimoffice@gmail.com", "JINKIMOFFICE@GMAIL.COM"),
+    }
+    problems: list[str] = []
+    if page.title() != "JIN KIM - ENVIRONMENT CONCEPT ARTIST PORTFOLIO":
+        problems.append(f"mixed-case document title: {page.title()!r}")
+    if font_state != {"check": True, "count": 1, "status": "loaded"}:
+        problems.append(f"D-DIN FontFaceSet state: {font_state!r}")
+
+    for name, typography in typography_samples.items():
+        source, rendered = expected_text[name]
+        if typography["source"] != source:
+            problems.append(f"{name} source text: {typography['source']!r}")
+        if typography["rendered"] != rendered:
+            problems.append(f"{name} rendered text: {typography['rendered']!r}")
+        if typography["transform"] != "uppercase":
+            problems.append(f"{name} text-transform: {typography['transform']!r}")
+        first_family = typography["family"].split(",", 1)[0].strip().strip('"')
+        if first_family != "D-DIN Condensed":
+            problems.append(f"{name} first font family: {first_family!r}")
+        if "Noto Sans KR" not in typography["family"]:
+            problems.append(f"{name} lost Korean fallback: {typography['family']!r}")
+
+    expected_font_url = (
+        f"{portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0]}{DDIN_FONT_PATH}?v={DDIN_FONT_DIGEST}"
+    )
+    response_urls = {response.url for response in font_responses}
+    if response_urls != {expected_font_url}:
+        problems.append(f"D-DIN network URLs: {sorted(response_urls)!r}")
+    for response in font_responses:
+        if response.status != 200:
+            problems.append(f"D-DIN response status: {response.status}")
+            continue
+        font_bytes = response.body()
+        if len(font_bytes) != 58_536:
+            problems.append(f"D-DIN response size: {len(font_bytes)}")
+        if hashlib.sha256(font_bytes).hexdigest() != DDIN_FONT_DIGEST:
+            problems.append("D-DIN response bytes do not match the supplied OTF")
+
+    assert page.locator("html").get_attribute("lang") == "ko"
+    assert page.locator("#contact-modal a").get_attribute("href") == (
+        "mailto:jinkimoffice@gmail.com"
+    )
+    assert "한글" in typography_samples["tab"]["rendered"]
+    assert "한글" in typography_samples["detail-modal"]["rendered"]
+    assert not problems, "\n".join(problems)
 
 
 @pytest.mark.parametrize("viewport", [(1920, 500), (1024, 300)])

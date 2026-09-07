@@ -41,6 +41,15 @@ describe("public root asset policy", () => {
 
     expect(runtimeRootAssets).toEqual(buildRootAssets);
   });
+
+  it("explicitly publishes the D-DIN font and its OFL companion in both paths", () => {
+    const typographyAssets = ["fonts/D-DINCondensed.otf", "fonts/OFL.txt"];
+
+    expect(rootPublicFiles).toEqual(expect.arrayContaining(typographyAssets));
+    for (const assetPath of typographyAssets) {
+      expect(publicRuntimeAssetPaths().has(assetPath)).toBe(true);
+    }
+  });
 });
 
 async function currentPublicMediaVersions(): Promise<Record<string, string>> {

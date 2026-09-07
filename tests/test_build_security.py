@@ -14,6 +14,11 @@ from urllib.parse import quote
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DIST = REPO_ROOT / "dist"
 SERVER_DIST = REPO_ROOT / "server-dist"
+DDIN_FONT_PATH = Path("fonts/D-DINCondensed.otf")
+DDIN_LICENSE_PATH = Path("fonts/OFL.txt")
+DDIN_FONT_SHA256 = "02f4857e115e978480bac95274382a13ad1915e5ed828d065f07ecedccab50fc"
+DDIN_LICENSE_SHA256 = "6ebc80300924cbc782b7758837a57699028faf10b9fce3545d55f33afff4855e"
+DDIN_LICENSE_SIZE = 4_387
 CONFIGURATION = json.loads(
     (REPO_ROOT / "config" / "portfolio-manifest.json").read_text(encoding="utf-8")
 )
@@ -124,6 +129,7 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
     first = run_npm("build", runtime_sentinels)
     assert first.returncode == 0, first.stderr
     first_inventory = inventory(DIST)
+    assert len(first_inventory) == 106
 
     second = run_npm("build", runtime_sentinels)
     assert second.returncode == 0, second.stderr
@@ -135,6 +141,8 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
         "jin-kim-cover.webp",
         "portfolio.js",
         "portfolio.css",
+        "fonts/D-DINCondensed.otf",
+        "fonts/OFL.txt",
         "public-portfolio-manifest.json",
         "두미니어니언/DoMiniOnion_Trailer.mp4",
     ):
@@ -174,6 +182,7 @@ def test_build_is_deterministic_and_contains_only_public_assets() -> None:
 
     check = run_npm("check:dist")
     assert check.returncode == 0, check.stderr
+    assert "Verified the exact 106-file public build; protected media is excluded." in check.stdout
 
 
 def test_resume_stylesheet_url_is_relative_to_the_pages_project_path() -> None:
@@ -217,6 +226,58 @@ def test_portfolio_stylesheet_url_is_bound_to_its_content_digest() -> None:
     assert build.returncode == 0, build.stderr
     published = (DIST / "jin_kim_portfolio.html").read_text(encoding="utf-8")
     assert f'href="./portfolio.css?v={stylesheet_digest}"' in published
+
+
+def test_portfolio_publishes_the_exact_ddin_font_and_complete_license() -> None:
+    build = run_npm("build:public")
+    assert build.returncode == 0, build.stderr
+
+    published_font = DIST / DDIN_FONT_PATH
+    published_license = DIST / DDIN_LICENSE_PATH
+    missing = [
+        path.relative_to(DIST).as_posix()
+        for path in (published_font, published_license)
+        if not path.is_file()
+    ]
+    assert missing == [], f"D-DIN public build assets are absent: {missing}"
+
+    source_font = REPO_ROOT / DDIN_FONT_PATH
+    font_bytes = source_font.read_bytes()
+    assert len(font_bytes) == 58_536
+    assert hashlib.sha256(font_bytes).hexdigest() == DDIN_FONT_SHA256
+    assert published_font.read_bytes() == font_bytes
+
+    source_license = REPO_ROOT / DDIN_LICENSE_PATH
+    license_bytes = source_license.read_bytes()
+    assert len(license_bytes) == DDIN_LICENSE_SIZE
+    assert hashlib.sha256(license_bytes).hexdigest() == DDIN_LICENSE_SHA256
+    license_text = license_bytes.decode("utf-8")
+    assert "Copyright © Datto, Inc. All rights reserved." in license_text
+    assert "Reserved Font Name \"D-DIN Condensed\"" in license_text
+    for required_section in (
+        "SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007",
+        "PREAMBLE",
+        "DEFINITIONS",
+        "PERMISSION & CONDITIONS",
+        "TERMINATION",
+        "DISCLAIMER",
+    ):
+        assert required_section in license_text
+    for condition in range(1, 6):
+        assert f"{condition})" in license_text
+    assert published_license.read_bytes() == license_bytes
+
+    stylesheet = (REPO_ROOT / "portfolio.css").read_text(encoding="utf-8")
+    expected_url = f'./{DDIN_FONT_PATH.as_posix()}?v={DDIN_FONT_SHA256}'
+    assert f'url("{expected_url}") format("opentype")' in stylesheet
+    assert "font-display: swap" in stylesheet
+    assert ".woff" not in stylesheet.casefold()
+    assert sorted(
+        path.relative_to(REPO_ROOT / "fonts").as_posix()
+        for path in (REPO_ROOT / "fonts").iterdir()
+        if path.is_file()
+    ) == ["D-DINCondensed.otf", "OFL.txt"]
+    assert len(inventory(DIST)) == 106
 
 
 def test_profile_image_is_copied_to_public_build_with_approved_bytes() -> None:

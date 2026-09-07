@@ -19,6 +19,8 @@ const ROOT_PUBLIC_ASSETS = Object.freeze([
   "Jin_Kim_Resume.pdf",
   "NYPC Ranking.jpg",
   "NYPC ranking.pdf",
+  "fonts/D-DINCondensed.otf",
+  "fonts/OFL.txt",
   "index.html",
   "kyk.png",
   "jin-kim-cover.webp",

@@ -60,6 +60,47 @@ describe("public artwork content types", () => {
   });
 });
 
+describe("public typography asset content types", () => {
+  it.each([
+    {
+      contentType: "font/otf",
+      expectedBytes: Buffer.from("synthetic OpenType font bytes"),
+      sourcePath: "fonts/D-DINCondensed.otf",
+    },
+    {
+      contentType: "text/plain; charset=utf-8",
+      expectedBytes: Buffer.from("synthetic OFL text\n"),
+      sourcePath: "fonts/OFL.txt",
+    },
+  ])("serves $sourcePath with browser-safe GET and HEAD metadata", async ({
+    contentType,
+    expectedBytes,
+    sourcePath,
+  }) => {
+    const root = await temporaryRoot();
+    await mkdir(path.join(root, "fonts"));
+    await writeFile(path.join(root, sourcePath), expectedBytes);
+    const store = await createPublicAssetStore({
+      allowedPaths: new Set([sourcePath]),
+      mediaVersions: {},
+      root,
+      versionedPaths: new Set(),
+    });
+
+    const get = await store.response(`/${sourcePath}`, "GET");
+    expect(get).not.toBeNull();
+    expect(get!.headers.get("content-type")).toBe(contentType);
+    expect(get!.headers.get("content-length")).toBe(String(expectedBytes.byteLength));
+    expect(Buffer.from(await get!.arrayBuffer())).toEqual(expectedBytes);
+
+    const head = await store.response(`/${sourcePath}`, "HEAD");
+    expect(head).not.toBeNull();
+    expect(head!.headers.get("content-type")).toBe(contentType);
+    expect(head!.headers.get("content-length")).toBe(String(expectedBytes.byteLength));
+    expect((await head!.arrayBuffer()).byteLength).toBe(0);
+  });
+});
+
 describe("versioned public-media startup validation", () => {
   it("serves unchanged GET and concurrent HEAD requests without request-path content hashing", async () => {
     const root = await temporaryRoot();
