@@ -419,10 +419,7 @@ def test_static_github_pages_uses_relative_assets_and_guest_manifest_only(page: 
     assert page.locator("#gallery-grid img").count() == 1
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
     assert page.locator("#category-tabs .tab-lock").count() == 0
-    assert page.get_by_text(
-        "일부 미공개 프로젝트 및 제작 과정은 보안상 공개하지 않으며, 면접 일정이 확정된 담당자에게 별도로 공유드립니다.",
-        exact=True,
-    ).is_visible()
+    assert page.locator("#confidential-notice").count() == 0
 
     page.get_by_role("button", name="개인작", exact=True).click()
     personal_16 = urlsplit(
@@ -835,7 +832,7 @@ def test_guest_hides_confidential_work_and_requests_no_protected_media(
     assert page.locator("#gallery-grid img").count() == 1
     assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
     assert page.locator("#category-tabs .tab-lock").count() == 0
-    assert page.locator("#confidential-notice").is_visible()
+    assert page.locator("#confidential-notice").count() == 0
 
     assert protected_requests == []
     assert page.locator('[src*="/protected/"], [poster*="/protected/"]').count() == 0
@@ -858,7 +855,7 @@ def test_interview_form_enter_unlocks_both_projects_once(
     page.get_by_label("비밀번호").press("Enter")
     page.locator("#gallery-shell").wait_for(state="visible")
     assert calls["login"] == 1
-    assert page.locator("#confidential-notice").is_hidden()
+    assert page.locator("#confidential-notice").count() == 0
 
     for title, count in (("Project MP", 6), ("Project DM", 12)):
         page.get_by_role("button", name=title, exact=True).click()
