@@ -69,6 +69,7 @@ const elements = {
     previousButton: document.querySelector('#previous-button'),
     nextButton: document.querySelector('#next-button'),
     modalMedia: document.querySelector('#modal-media-container'),
+    modalInfo: document.querySelector('#modal-info'),
     modalTitle: document.querySelector('#modal-title'),
     contactButton: document.querySelector('#contact-button'),
     contactModal: document.querySelector('#contact-modal'),
@@ -631,10 +632,13 @@ function makeArtworkCard(item, index) {
     media.src = item.url;
     frame.append(media);
 
-    const label = document.createElement('span');
-    label.className = 'artwork-label';
-    label.textContent = item.title;
-    card.append(frame, label);
+    card.append(frame);
+    if (item.type === 'video') {
+        const label = document.createElement('span');
+        label.className = 'artwork-label';
+        label.textContent = item.title;
+        card.append(label);
+    }
     return card;
 }
 
@@ -666,6 +670,9 @@ function renderViewerItem() {
     cleanupViewerMedia();
 
     const identity = viewerIdentity(item, project);
+    const captionless = item.type === 'image';
+    elements.modalInfo.hidden = captionless;
+    elements.modalMedia.classList.toggle('viewer-media--captionless', captionless);
     const media = document.createElement(item.type === 'video' ? 'video' : 'img');
     media.src = item.url;
     if (item.type === 'video') {
