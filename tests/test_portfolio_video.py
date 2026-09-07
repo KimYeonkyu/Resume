@@ -161,6 +161,17 @@ def assert_media_and_caption_group_is_vertically_centered(page: Page) -> None:
     assert group_center == pytest.approx(viewport["height"] / 2, abs=max(2, viewport["height"] * 0.02))
 
 
+def assert_captionless_media_is_vertically_centered(page: Page) -> None:
+    media = page.locator("#modal-media-container > img")
+    media_box = media.bounding_box()
+    viewport = page.viewport_size
+    assert media_box is not None and viewport is not None
+    assert media_box["y"] >= 0
+    assert media_box["y"] + media_box["height"] <= viewport["height"] + 0.5
+    media_center = media_box["y"] + media_box["height"] / 2
+    assert media_center == pytest.approx(viewport["height"] / 2, abs=max(2, viewport["height"] * 0.02))
+
+
 def test_public_resume_still_loads(page: Page, portfolio_url: str) -> None:
     page.goto(portfolio_url.rsplit(PORTFOLIO_PATH, 1)[0] + "/", wait_until="domcontentloaded")
     assert page.get_by_role("heading", name="김연규 (JIN KIM)", exact=True).is_visible()
@@ -201,6 +212,7 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
 
     thumbnail = cards.locator("video")
     assert thumbnail.count() == 1
+    assert cards.first.locator(".artwork-label").inner_text() == "DoMiniOnion Trailer"
     assert thumbnail.evaluate("video => new URL(video.src).pathname") == VIDEO_PATH
     assert thumbnail.evaluate("video => new URL(video.src).searchParams.get('v')") == asset_version(
         VIDEO_SOURCE_PATH
@@ -220,6 +232,11 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     assert modal.is_visible()
     assert modal.get_attribute("role") == "dialog"
     assert modal.get_attribute("aria-modal") == "true"
+    assert modal.locator("#modal-info").is_visible()
+    assert modal.locator("#modal-title").inner_text() == "두미니어니언 DoMiniOnion Trailer"
+    assert not modal.locator("#modal-media-container").evaluate(
+        "element => element.classList.contains('viewer-media--captionless')"
+    )
     trailer = modal.locator("video[controls]")
     assert trailer.count() == 1
     assert trailer.evaluate("video => new URL(video.src).pathname") == VIDEO_PATH
@@ -263,33 +280,29 @@ def test_dominionion_category_uses_local_trailer(page: Page, portfolio_url: str)
     assert failed_responses == []
 
 
-def test_viewer_shows_one_persistent_identity_line_without_a_gradient(
+def test_image_card_and_viewer_hide_visual_identity_but_keep_accessible_names(
     page: Page, portfolio_url: str
 ) -> None:
     enter_public(page, portfolio_url)
-    page.locator("#gallery-grid > button").nth(16).click()
+    card = page.locator("#gallery-grid > button").first
 
+    assert card.locator(".artwork-label").count() == 0
+    assert card.get_attribute("aria-label") == "1 상세 보기"
+    assert card.locator("img").get_attribute("alt") == "1"
+
+    card.click()
     modal = page.locator("#detail-modal")
     caption = modal.locator("#modal-info")
-    caption_line = caption.locator("#modal-title")
-    assert caption_line.inner_text() == "개인작 17"
-    assert caption.locator(":visible").count() == 1
-    assert caption.evaluate("element => getComputedStyle(element).backgroundImage") == "none"
-    for pseudo in ("::before", "::after"):
-        assert caption.evaluate(
-            "(element, pseudo) => getComputedStyle(element, pseudo).backgroundImage",
-            pseudo,
-        ) == "none"
-    assert caption_line.evaluate("element => getComputedStyle(element).whiteSpace") == "nowrap"
-    assert_caption_below_rendered_media(page)
-
-    page.wait_for_timeout(3_200)
-    assert caption_line.is_visible()
-    assert caption.evaluate("element => getComputedStyle(element).opacity") == "1"
-    assert caption_line.inner_text() == "개인작 17"
+    assert caption.is_hidden()
+    assert modal.locator("#modal-title").text_content() == "개인작 1"
+    assert modal.get_attribute("aria-labelledby") == "modal-title"
+    assert modal.locator("#modal-media-container").evaluate(
+        "element => element.classList.contains('viewer-media--captionless')"
+    )
+    assert modal.locator("#modal-media-container img").get_attribute("alt") == "1"
 
 
-def test_every_personal_item_navigation_reuses_the_caption_below_media_layout(
+def test_every_personal_image_navigation_hides_the_visual_caption(
     page: Page, portfolio_url: str
 ) -> None:
     enter_public(page, portfolio_url)
@@ -299,18 +312,20 @@ def test_every_personal_item_navigation_reuses_the_caption_below_media_layout(
     for artwork_number in range(1, 24):
         assert modal.locator(".viewer-content > #modal-media-container").count() == 1
         assert modal.locator(".viewer-content > #modal-info").count() == 1
-        assert modal.locator("#modal-title").inner_text() == f"개인작 {artwork_number}"
-        assert_caption_below_rendered_media(page)
+        assert modal.locator("#modal-info").is_hidden()
+        assert modal.locator("#modal-title").text_content() == f"개인작 {artwork_number}"
+        assert modal.locator("#modal-media-container").evaluate(
+            "element => element.classList.contains('viewer-media--captionless')"
+        )
         modal.locator("#next-button").click()
 
-    assert modal.locator("#modal-title").inner_text() == "개인작 1"
+    assert modal.locator("#modal-title").text_content() == "개인작 1"
     modal.locator("#modal-close-button").click()
 
     page.get_by_role("button", name="Project MP", exact=True).click()
     page.locator("#gallery-grid .artwork-card").click()
-    assert modal.locator("#modal-title").inner_text() == "Project MP · 24"
-    assert modal.locator("#modal-info").inner_text().count("Project MP") == 1
-    assert_caption_below_rendered_media(page)
+    assert modal.locator("#modal-title").text_content() == "Project MP · 24"
+    assert modal.locator("#modal-info").is_hidden()
 
 
 def test_viewer_identity_deduplicates_case_and_supported_category_boundaries(
@@ -363,7 +378,7 @@ def test_viewer_identity_deduplicates_case_and_supported_category_boundaries(
         (844, 320),
     ],
 )
-def test_image_and_video_viewers_fit_caption_below_media_at_key_viewports(
+def test_image_hides_caption_and_video_preserves_it_at_key_viewports(
     page: Page, portfolio_url: str, viewport: tuple[int, int]
 ) -> None:
     width, height = viewport
@@ -372,8 +387,8 @@ def test_image_and_video_viewers_fit_caption_below_media_at_key_viewports(
 
     page.locator("#gallery-grid > button").nth(1).click()
     assert page.locator("#modal-title").inner_text() == "개인작 2"
-    assert_caption_below_rendered_media(page)
-    assert_media_and_caption_group_is_vertically_centered(page)
+    assert page.locator("#modal-info").is_hidden()
+    assert_captionless_media_is_vertically_centered(page)
     page.locator("#modal-close-button").click()
 
     page.get_by_role("button", name="두미니어니언", exact=True).click()
@@ -389,7 +404,8 @@ def test_viewer_constrains_an_unusually_long_caption_to_the_mobile_viewport(
 ) -> None:
     page.set_viewport_size({"width": 320, "height": 568})
     enter_public(page, portfolio_url)
-    page.locator("#gallery-grid > button").first.click()
+    page.get_by_role("button", name="두미니어니언", exact=True).click()
+    page.locator("#gallery-grid > button").click()
 
     caption = page.locator("#modal-info")
     caption_line = caption.locator("#modal-title")
@@ -432,6 +448,10 @@ def test_existing_public_image_categories_still_load(
     locked_cards = page.locator('#gallery-grid [data-locked="true"]')
     assert images.count() == expected_image_count
     assert locked_cards.count() == expected_locked_count
+    assert page.locator("#gallery-grid .artwork-label").count() == 0
+    assert page.locator("#gallery-grid > button").evaluate_all(
+        "buttons => buttons.every(button => button.innerText === '')"
+    )
     configured_project = next(
         project for project in CONFIGURATION["projects"] if project["title"] == category
     )

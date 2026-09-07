@@ -571,6 +571,10 @@ input:focus-visible {
     overflow: hidden;
 }
 
+.viewer-media--captionless {
+    max-height: 100%;
+}
+
 .viewer-media img,
 .viewer-media video {
     display: block;
@@ -626,6 +630,10 @@ input:focus-visible {
     padding-top: clamp(9px, 1.6vh, 14px);
     pointer-events: none;
     background: none;
+}
+
+.viewer-info[hidden] {
+    display: none;
 }
 
 .viewer-info h2 {

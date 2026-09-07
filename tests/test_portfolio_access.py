@@ -887,8 +887,12 @@ def test_interview_form_enter_unlocks_both_projects_once(
         cards = page.locator("#gallery-grid > button")
         assert cards.count() == count
         assert page.locator('#gallery-grid [data-locked="true"]').count() == 0
+        assert cards.locator(".artwork-label").count() == 0
+        assert cards.evaluate_all("buttons => buttons.every(button => button.innerText === '')")
         (cards.last if title == "Project MP" else cards.first).click()
         assert page.locator("#detail-modal").is_visible()
+        assert page.locator("#modal-info").is_hidden()
+        assert page.locator("#modal-title").text_content()
         viewer_image = page.locator("#modal-media-container img")
         viewer_image.wait_for(state="visible")
         assert viewer_image.get_attribute("src") in calls["protected_urls"][
