@@ -225,7 +225,7 @@ function applyRemoteSessionIntent(intent, requirePersistedMatch = true) {
     if (intent.kind === 'login') return;
     beginAccessFlow({ local: false });
     discardProtectedGallery();
-    elements.entranceStatus.textContent = '다른 창의 요청으로 보호 콘텐츠를 화면에서 제거했습니다.';
+    elements.entranceStatus.textContent = '';
 }
 
 function publishLogoutIntent(intent) {
