@@ -179,11 +179,8 @@ input:focus-visible {
 }
 
 .avatar {
-    display: grid;
-    place-items: center;
-    color: white;
-    font-weight: 800;
-    background: linear-gradient(135deg, #2563eb, #6366f1);
+    display: block;
+    object-fit: cover;
 }
 
 .login-form {
@@ -323,6 +320,10 @@ input:focus-visible {
 
 .artist-name {
     font-weight: 750;
+}
+
+#gallery-title:focus {
+    outline: 0;
 }
 
 .artist-role {

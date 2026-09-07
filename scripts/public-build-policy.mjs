@@ -6,6 +6,7 @@ export const rootPublicFiles = Object.freeze([
   "index.html",
   "kyk.png",
   "jin-kim-cover.webp",
+  "jin-kim-profile.png",
   "jin_kim_portfolio.html",
   "portfolio.css",
   "portfolio.js",
