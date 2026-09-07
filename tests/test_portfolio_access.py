@@ -706,6 +706,31 @@ def test_clicking_anywhere_on_cover_enters_public_portfolio(
     assert page.locator("#access-status").text_content() == "공개 보기"
 
 
+def test_cover_click_keeps_pending_logout_status_empty(
+    page: Page, portfolio_url: str
+) -> None:
+    calls = install_interview_api(page, secrets.token_urlsafe(32), defer_logout=True)
+    page.goto(portfolio_url, wait_until="domcontentloaded")
+
+    page.mouse.click(20, 20)
+    for _ in range(50):
+        if calls["logout"] == 1:
+            break
+        page.wait_for_timeout(10)
+    assert calls["logout"] == 1
+    pending_logout = calls["pending_logout"]
+    assert isinstance(pending_logout, list)
+    assert len(pending_logout) == 1
+    pending_status = page.locator("#entrance-status").text_content()
+
+    delayed_logout = pending_logout.pop()
+    assert isinstance(delayed_logout, Route)
+    delayed_logout.fulfill(status=204)
+    page.locator("#gallery-shell").wait_for(state="visible")
+
+    assert pending_status == ""
+
+
 def test_small_key_opens_interview_password_form_without_entering_public_gallery(
     page: Page, portfolio_url: str
 ) -> None:

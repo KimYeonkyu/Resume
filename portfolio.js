@@ -229,7 +229,6 @@ function applyRemoteSessionIntent(intent, requirePersistedMatch = true) {
 
 function publishLogoutIntent(intent) {
     discardProtectedGallery();
-    elements.entranceStatus.textContent = '보호 콘텐츠를 화면에서 제거하고 서버 잠금을 처리 중입니다.';
     commitSessionIntent(intent);
 }
 
